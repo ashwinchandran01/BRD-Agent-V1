@@ -12,12 +12,17 @@
         }
 
         :root {
+            /* GoComet Primary Colors */
             --primary-50: #f0f6ff;
             --primary-100: #e6f2ff;
             --primary-400: #3376ff;
             --primary-500: #0054ff;
             --primary-800: #003e9c;
+            
+            /* GoComet Secondary */
             --secondary-500: #112f6b;
+            
+            /* Extended palette */
             --gray-50: #f8fafc;
             --gray-100: #f1f5f9;
             --gray-200: #e2e8f0;
@@ -28,6 +33,7 @@
             --gray-700: #334155;
             --gray-800: #1e293b;
             --gray-900: #0f172a;
+            
             --success-500: #10b981;
             --success-600: #059669;
             --error-500: #ef4444;
@@ -35,7 +41,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Proxima Nova', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             background: linear-gradient(135deg, var(--primary-50) 0%, var(--gray-50) 100%);
             color: var(--gray-800);
             line-height: 1.6;
@@ -71,6 +77,14 @@
             margin: 0 auto;
         }
 
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(17, 47, 107, 0.1);
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+        }
+
         .tabs {
             display: flex;
             background: var(--gray-50);
@@ -91,9 +105,31 @@
             overflow: hidden;
         }
 
+        .tab::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-500), var(--primary-400));
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
         .tab.active {
             background: white;
             color: var(--primary-500);
+            box-shadow: 0 -2px 10px rgba(0, 84, 255, 0.1);
+        }
+
+        .tab.active::before {
+            transform: translateX(0);
+        }
+
+        .tab:hover:not(.active) {
+            background: var(--primary-50);
+            color: var(--primary-600);
         }
 
         .tab-content {
@@ -117,9 +153,56 @@
             border-radius: 16px;
             padding: 3rem 2rem;
             text-align: center;
+            transition: all 0.3s ease;
             cursor: pointer;
             background: var(--gray-50);
             position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .upload-area:hover::before,
+        .upload-area.dragover::before {
+            opacity: 0.05;
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: var(--primary-400);
+            background: var(--primary-50);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 84, 255, 0.15);
+        }
+
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .upload-text {
+            position: relative;
+            z-index: 1;
         }
 
         .upload-text h3 {
@@ -135,8 +218,76 @@
             font-size: 1rem;
         }
 
+        .file-types {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+            font-weight: 500;
+        }
+
         .file-input {
             display: none;
+        }
+
+        .file-preview {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, var(--success-50, #f0fdf4) 0%, var(--primary-50) 100%);
+            border-radius: 12px;
+            border: 1px solid var(--success-200, #bbf7d0);
+        }
+
+        .file-preview h4 {
+            color: var(--success-700, #15803d);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .file-list {
+            list-style: none;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--success-200, #bbf7d0);
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            color: var(--gray-800);
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .file-size {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+
+        .remove-file {
+            color: var(--error-500);
+            cursor: pointer;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+
+        .remove-file:hover {
+            background: var(--error-50, #fef2f2);
+            color: var(--error-600, #dc2626);
         }
 
         .generate-btn {
@@ -150,6 +301,36 @@
             border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 84, 255, 0.3);
+        }
+
+        .generate-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .generate-btn:hover:not(:disabled)::before {
+            left: 100%;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(0, 84, 255, 0.4);
+        }
+
+        .generate-btn:disabled {
+            background: var(--gray-300);
+            cursor: not-allowed;
+            color: var(--gray-500);
+            box-shadow: none;
         }
 
         .progress-section {
@@ -172,6 +353,17 @@
             justify-content: center;
             margin: 0 auto 2rem;
             position: relative;
+            box-shadow: 0 15px 35px rgba(0, 84, 255, 0.2);
+        }
+
+        .progress-circle::before {
+            content: '';
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.1);
         }
 
         .progress-text {
@@ -185,8 +377,103 @@
             z-index: 1;
         }
 
+        .progress-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 0.75rem;
+        }
+
+        .progress-description {
+            color: var(--gray-600);
+            margin-bottom: 3rem;
+            font-size: 1.125rem;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gray-200);
+            z-index: 0;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: var(--gray-500);
+            transition: all 0.3s ease;
+            border: 3px solid white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .step.active .step-number {
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+            color: white;
+            box-shadow: 0 8px 20px rgba(0, 84, 255, 0.4);
+            transform: scale(1.1);
+        }
+
+        .step.completed .step-number {
+            background: linear-gradient(135deg, var(--success-500), var(--success-600));
+            color: white;
+            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .step-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .step.active .step-label {
+            color: var(--primary-500);
+            font-weight: 600;
+        }
+
         .canvas-section {
             text-align: center;
+        }
+
+        .canvas-section h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 0.75rem;
+        }
+
+        .canvas-section > p {
+            color: var(--gray-600);
+            margin-bottom: 2rem;
+            font-size: 1.125rem;
         }
 
         .canvas-preview {
@@ -207,6 +494,20 @@
             border: 1px solid var(--gray-200);
         }
 
+        .brd-content h3 {
+            color: var(--secondary-500);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .brd-content h4 {
+            color: var(--primary-500);
+            margin: 1.5rem 0 0.75rem 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
         .action-buttons {
             display: flex;
             gap: 1rem;
@@ -214,9 +515,57 @@
             flex-wrap: wrap;
         }
 
+        .btn {
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
         .btn-primary {
             background: linear-gradient(135deg, var(--success-500), var(--success-600));
             color: white;
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary-500), var(--primary-800));
+            color: white;
+            box-shadow: 0 8px 20px rgba(17, 47, 107, 0.3);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(17, 47, 107, 0.4);
         }
 
         .notification {
@@ -230,6 +579,8 @@
             z-index: 1000;
             transform: translateX(100%);
             transition: transform 0.3s ease;
+            max-width: 350px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
         }
 
         .notification.show {
@@ -239,16 +590,104 @@
         .notification.success {
             background: linear-gradient(135deg, var(--success-500), var(--success-600));
         }
+
+        .notification.error {
+            background: linear-gradient(135deg, var(--error-500), #dc2626);
+        }
+
+        .notification.info {
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header {
+                padding: 1rem 0;
+                margin-bottom: 2rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .upload-section {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .upload-area {
+                padding: 2rem 1rem;
+            }
+            
+            .tab-content {
+                padding: 2rem 1rem;
+            }
+            
+            .progress-steps {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            
+            .progress-steps::before {
+                display: none;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Custom animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
+        <div class="header fade-in-up">
             <h1>GoComet BRD AI Agent</h1>
-            <p>Transform your solution documents into comprehensive Business Requirements Documents with AI precision.</p>
+            <p>Transform your solution documents into comprehensive Business Requirements Documents with AI precision</p>
         </div>
 
-        <div class="main-content">
+        <div class="main-content fade-in-up">
             <div class="tabs">
                 <button class="tab active" onclick="switchTab('upload')">📁 Upload Documents</button>
                 <button class="tab" onclick="switchTab('progress')">⚡ AI Processing</button>
@@ -258,11 +697,41 @@
             <!-- Upload Tab -->
             <div id="upload-tab" class="tab-content active">
                 <div class="upload-section">
-                    <div class="upload-area" onclick="document.getElementById('solution-docs').click()">
+                    <div class="upload-area" onclick="document.getElementById('solution-docs').click()" 
+                         ondrop="handleDrop(event, 'solution')" 
+                         ondragover="handleDragOver(event)"
+                         ondragenter="handleDragEnter(event, this)"
+                         ondragleave="handleDragLeave(event, this)">
+                        <div class="upload-icon">📄</div>
                         <div class="upload-text">
                             <h3>Solution Documents</h3>
                             <p>Upload your technical solution documentation</p>
-                            <input type="file" id="solution-docs" class="file-input" multiple accept=".pdf,.docx,.doc,.txt,.md" onchange="handleFileSelect(event, 'solution')">
+                            <div class="file-types">PDF • DOCX • TXT • MD</div>
+                        </div>
+                        <input type="file" id="solution-docs" class="file-input" multiple 
+                               accept=".pdf,.docx,.doc,.txt,.md" onchange="handleFileSelect(event, 'solution')">
+                        <div id="solution-preview" class="file-preview" style="display: none;">
+                            <h4>✅ Selected Files:</h4>
+                            <ul id="solution-files" class="file-list"></ul>
+                        </div>
+                    </div>
+
+                    <div class="upload-area" onclick="document.getElementById('flowchart-files').click()"
+                         ondrop="handleDrop(event, 'flowchart')"
+                         ondragover="handleDragOver(event)"
+                         ondragenter="handleDragEnter(event, this)"
+                         ondragleave="handleDragLeave(event, this)">
+                        <div class="upload-icon">🎨</div>
+                        <div class="upload-text">
+                            <h3>Visual Assets</h3>
+                            <p>Upload flowcharts, diagrams, and wireframes</p>
+                            <div class="file-types">PNG • JPG • PDF • SVG</div>
+                        </div>
+                        <input type="file" id="flowchart-files" class="file-input" multiple 
+                               accept=".png,.jpg,.jpeg,.pdf,.svg" onchange="handleFileSelect(event, 'flowchart')">
+                        <div id="flowchart-preview" class="file-preview" style="display: none;">
+                            <h4>✅ Selected Files:</h4>
+                            <ul id="flowchart-files-list" class="file-list"></ul>
                         </div>
                     </div>
                 </div>
@@ -275,19 +744,43 @@
             <!-- Progress Tab -->
             <div id="progress-tab" class="tab-content">
                 <div class="progress-section">
-                    <div class="progress-circle" style="--progress: 0%">
+                    <div class="progress-circle pulse" style="--progress: 0%">
                         <div class="progress-text">0%</div>
                     </div>
-                    <h2>Processing Documents...</h2>
-                    <p>We are analyzing your documents and preparing the BRD.</p>
+                    <h2 class="progress-title" id="progress-title">Ready to Process</h2>
+                    <p class="progress-description" id="progress-description">Upload your documents to begin AI analysis</p>
+
+                    <div class="progress-steps">
+                        <div class="step" id="step-upload">
+                            <div class="step-number">1</div>
+                            <div class="step-label">Upload</div>
+                        </div>
+                        <div class="step" id="step-analyze">
+                            <div class="step-number">2</div>
+                            <div class="step-label">Analyze</div>
+                        </div>
+                        <div class="step" id="step-ai">
+                            <div class="step-number">3</div>
+                            <div class="step-label">AI Process</div>
+                        </div>
+                        <div class="step" id="step-generate">
+                            <div class="step-number">4</div>
+                            <div class="step-label">Generate</div>
+                        </div>
+                        <div class="step" id="step-complete">
+                            <div class="step-number">5</div>
+                            <div class="step-label">Complete</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Canvas Tab -->
             <div id="canvas-tab" class="tab-content">
                 <div class="canvas-section">
-                    <h2>Generated BRD</h2>
-                    <p>Your AI-powered Business Requirements Document is ready for review and collaboration.</p>
+                    <h2>🎯 Generated BRD Document</h2>
+                    <p>Your AI-powered Business Requirements Document is ready for review and collaboration</p>
+                    
                     <div class="canvas-preview">
                         <div id="brd-content" class="brd-content">
                             <h3>Business Requirements Document</h3>
@@ -296,7 +789,12 @@
                     </div>
 
                     <div class="action-buttons">
-                        <button class="btn-primary" onclick="downloadBRD()">💾 Download BRD</button>
+                        <button class="btn btn-primary" onclick="openOpenAICanvas()">
+                            🎨 Open in Canvas
+                        </button>
+                        <button class="btn btn-secondary" onclick="downloadBRD()">
+                            💾 Download BRD
+                        </button>
                     </div>
                 </div>
             </div>
@@ -307,20 +805,175 @@
     <div id="notification" class="notification"></div>
 
     <script>
-        const CONFIG = {
-            n8nWebhookUrl: 'https://your-n8n-instance.com/webhook/brd-generator',
-            openaiApiKey: 'your-openai-api-key-here',
-            model: 'gpt-4',
-            timeout: 300000
-        };
-
+        // Global variables
         let uploadedFiles = {
             solution: [],
+            flowchart: []
+        };
+        let currentProgress = 0;
+        let processingInterval = null;
+
+        // Configuration - Update these URLs for your setup
+        const CONFIG = {
+            n8nWebhookUrl: 'YOUR_N8N_WEBHOOK_URL_HERE', // Replace with your actual n8n webhook URL
+            timeout: 300000, // 5 minutes timeout
+            maxFileSize: 10 * 1024 * 1024, // 10MB max file size
+            allowedFileTypes: {
+                solution: ['.pdf', '.docx', '.doc', '.txt', '.md'],
+                flowchart: ['.png', '.jpg', '.jpeg', '.pdf', '.svg']
+            }
         };
 
+        // Tab switching with animation
+        window.switchTab = function(tabName) {
+            // Remove active class from all tabs and content
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Find and activate the clicked tab
+            const clickedTab = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
+            if (clickedTab) {
+                clickedTab.classList.add('active');
+            }
+            
+            // Show the corresponding tab content
+            const targetTab = document.getElementById(`${tabName}-tab`);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+        }
+
+        // Make other functions globally accessible
+        window.handleDrop = handleDrop;
+        window.handleDragOver = handleDragOver;
+        window.handleDragEnter = handleDragEnter;
+        window.handleDragLeave = handleDragLeave;
+        window.handleFileSelect = handleFileSelect;
+        window.removeFile = removeFile;
+        window.generateBRD = generateBRD;
+        window.openOpenAICanvas = openOpenAICanvas;
+        window.downloadBRD = downloadBRD;
+        function handleDragOver(event) {
+            event.preventDefault();
+        }
+
+        function handleDragEnter(event, element) {
+            event.preventDefault();
+            element.classList.add('dragover');
+        }
+
+        function handleDragLeave(event, element) {
+            event.preventDefault();
+            if (!element.contains(event.relatedTarget)) {
+                element.classList.remove('dragover');
+            }
+        }
+
+        function handleDrop(event, type) {
+            event.preventDefault();
+            const uploadArea = event.target.closest('.upload-area');
+            uploadArea.classList.remove('dragover');
+            const files = Array.from(event.dataTransfer.files);
+            addFiles(files, type);
+        }
+
+        function handleFileSelect(event, type) {
+            const files = Array.from(event.target.files);
+            addFiles(files, type);
+        }
+
+        function addFiles(files, type) {
+            // Validate file types and sizes
+            const allowedTypes = CONFIG.allowedFileTypes[type];
+            const validFiles = [];
+            
+            files.forEach(file => {
+                // Check file size
+                if (file.size > CONFIG.maxFileSize) {
+                    showNotification(`File "${file.name}" is too large. Max size: ${CONFIG.maxFileSize / 1024 / 1024}MB`, 'error');
+                    return;
+                }
+                
+                // Check file type
+                const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+                if (!allowedTypes.includes(fileExtension)) {
+                    showNotification(`File type "${fileExtension}" not allowed for ${type} documents`, 'error');
+                    return;
+                }
+                
+                // Check for duplicates
+                if (!uploadedFiles[type].some(f => f.name === file.name && f.size === file.size)) {
+                    validFiles.push(file);
+                    uploadedFiles[type].push(file);
+                }
+            });
+            
+            if (validFiles.length > 0) {
+                updateFilePreview(type);
+                updateGenerateButton();
+                showNotification(`${validFiles.length} file(s) uploaded successfully!`, 'success');
+            }
+        }
+
+        function updateFilePreview(type) {
+            const previewElement = document.getElementById(`${type}-preview`);
+            const filesList = document.getElementById(type === 'solution' ? 'solution-files' : 'flowchart-files-list');
+            
+            if (uploadedFiles[type].length > 0) {
+                previewElement.style.display = 'block';
+                previewElement.classList.add('fade-in-up');
+                filesList.innerHTML = '';
+                
+                uploadedFiles[type].forEach((file, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'file-item';
+                    li.innerHTML = `
+                        <div class="file-info">
+                            <span class="file-name">${file.name}</span>
+                            <span class="file-size">(${formatFileSize(file.size)})</span>
+                        </div>
+                        <span class="remove-file" onclick="removeFile('${type}', ${index})">Remove</span>
+                    `;
+                    filesList.appendChild(li);
+                });
+            } else {
+                previewElement.style.display = 'none';
+            }
+        }
+
+        function removeFile(type, index) {
+            uploadedFiles[type].splice(index, 1);
+            updateFilePreview(type);
+            updateGenerateButton();
+            showNotification('File removed successfully', 'info');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function updateGenerateButton() {
+            const generateBtn = document.getElementById('generate-btn');
+            const hasFiles = uploadedFiles.solution.length > 0 || uploadedFiles.flowchart.length > 0;
+            generateBtn.disabled = !hasFiles;
+        }
+
+        // BRD Generation with n8n webhook integration
         async function generateBRD() {
-            if (uploadedFiles.solution.length === 0) {
+            if (uploadedFiles.solution.length === 0 && uploadedFiles.flowchart.length === 0) {
                 showNotification('Please upload at least one document', 'error');
+                return;
+            }
+
+            // Check if webhook URL is configured
+            if (CONFIG.n8nWebhookUrl === 'YOUR_N8N_WEBHOOK_URL_HERE') {
+                showNotification('⚙️ Please configure your n8n webhook URL in the code', 'error');
                 return;
             }
 
@@ -328,33 +981,175 @@
             startProgressSimulation();
 
             try {
+                // Prepare FormData for n8n webhook
+                const formData = new FormData();
+                
+                // Add solution documents
+                uploadedFiles.solution.forEach((file, index) => {
+                    formData.append(`solution_doc_${index}`, file);
+                });
+                
+                // Add flowchart/visual files
+                uploadedFiles.flowchart.forEach((file, index) => {
+                    formData.append(`visual_asset_${index}`, file);
+                });
+                
+                // Add metadata
+                formData.append('metadata', JSON.stringify({
+                    timestamp: new Date().toISOString(),
+                    total_solution_docs: uploadedFiles.solution.length,
+                    total_visual_assets: uploadedFiles.flowchart.length,
+                    user_agent: navigator.userAgent,
+                    source: 'gocomet-brd-agent'
+                }));
+
+                console.log('Sending request to n8n webhook:', CONFIG.n8nWebhookUrl);
+
+                // Send to n8n webhook
                 const response = await fetch(CONFIG.n8nWebhookUrl, {
                     method: 'POST',
+                    body: formData,
                     headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        documents: uploadedFiles,
-                    }),
+                        'Accept': 'application/json',
+                    }
                 });
 
-                const data = await response.json();
-                if (data.brd_content) {
-                    completeProgress({ brd_content: data.brd_content });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+
+                const result = await response.json();
+                console.log('n8n webhook response:', result);
+                
+                // Complete progress with real result
+                completeProgress(result);
+                
             } catch (error) {
-                showNotification('Error processing BRD', 'error');
+                console.error('Error calling n8n webhook:', error);
+                showNotification(`Failed to process documents: ${error.message}`, 'error');
                 resetProgress();
             }
         }
 
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
+        async function simulateProcessing() {
+            return new Promise(resolve => {
+                setTimeout(resolve, 5000); // 5 second simulation
             });
-            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
-            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+
+        function startProgressSimulation() {
+            currentProgress = 0;
+            updateProgressDisplay(0, '🚀 Processing Documents...', 'Uploading and analyzing your documents');
+            document.getElementById('step-upload').classList.add('active');
+            
+            processingInterval = setInterval(() => {
+                if (currentProgress < 90) {
+                    currentProgress += Math.random() * 15;
+                    if (currentProgress > 90) currentProgress = 90;
+                    
+                    let title, description, activeStep;
+                    if (currentProgress < 20) {
+                        title = '📤 Uploading Documents...';
+                        description = 'Securely transferring files to AI processing server';
+                        activeStep = 'step-upload';
+                    } else if (currentProgress < 40) {
+                        title = '🔍 Analyzing Content...';
+                        description = 'Extracting text and analyzing document structure';
+                        activeStep = 'step-analyze';
+                    } else if (currentProgress < 70) {
+                        title = '🤖 AI Processing...';
+                        description = 'Advanced AI is analyzing your documents for insights';
+                        activeStep = 'step-ai';
+                    } else {
+                        title = '📝 Generating BRD...';
+                        description = 'Creating comprehensive Business Requirements Document';
+                        activeStep = 'step-generate';
+                    }
+                    
+                    updateProgressDisplay(currentProgress, title, description);
+                    updateProgressSteps(activeStep);
+                }
+            }, 800);
+        }
+
+        function completeProgress(result) {
+            clearInterval(processingInterval);
+            currentProgress = 100;
+            updateProgressDisplay(100, '✅ BRD Generated Successfully!', 'Your Business Requirements Document is ready for review');
+            updateProgressSteps('step-complete');
+            
+            // Handle the BRD content from n8n response
+            let brdContent = '';
+            if (result && result.brd_content) {
+                brdContent = result.brd_content;
+            } else if (result && result.content) {
+                brdContent = result.content;
+            } else if (result && typeof result === 'string') {
+                brdContent = result;
+            } else {
+                brdContent = `
+                    <h3>🎯 Business Requirements Document</h3>
+                    <h4>Generated from Your Documents</h4>
+                    <p><em>AI processing completed. The full BRD content should appear here based on your n8n workflow response.</em></p>
+                    <p><strong>Response received:</strong></p>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `;
+            }
+            
+            document.getElementById('brd-content').innerHTML = brdContent;
+            
+            showNotification('🎉 BRD generated successfully by AI!', 'success');
+            
+            setTimeout(() => {
+                switchTab('canvas');
+            }, 2000);
+        }
+
+        function resetProgress() {
+            clearInterval(processingInterval);
+            currentProgress = 0;
+            updateProgressDisplay(0, 'Ready to Process', 'Upload your documents to begin AI analysis');
+            
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active', 'completed');
+            });
+        }
+
+        function updateProgressDisplay(progress, title, description) {
+            document.querySelector('.progress-circle').style.setProperty('--progress', `${progress}%`);
+            document.querySelector('.progress-text').textContent = `${Math.round(progress)}%`;
+            document.getElementById('progress-title').textContent = title;
+            document.getElementById('progress-description').textContent = description;
+        }
+
+        function updateProgressSteps(activeStep) {
+            const steps = ['step-upload', 'step-analyze', 'step-ai', 'step-generate', 'step-complete'];
+            const activeIndex = steps.indexOf(activeStep);
+            
+            steps.forEach((step, index) => {
+                const element = document.getElementById(step);
+                element.classList.remove('active', 'completed');
+                
+                if (index < activeIndex) {
+                    element.classList.add('completed');
+                } else if (index === activeIndex) {
+                    element.classList.add('active');
+                }
+            });
+        }
+
+        // Canvas and Download functions
+        function openOpenAICanvas() {
+            const brdContent = document.getElementById('brd-content').innerHTML;
+            showNotification('🎨 Opening in AI Canvas...', 'info');
+            
+            // In a real implementation, this would integrate with OpenAI Canvas
+            console.log('BRD Content for Canvas:', brdContent);
+            
+            // Simulate opening external tool
+            setTimeout(() => {
+                showNotification('Canvas integration would open here in production', 'info');
+            }, 1500);
         }
 
         function downloadBRD() {
@@ -364,54 +1159,52 @@
                 <html>
                 <head>
                     <title>Business Requirements Document</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
+                        h3 { color: #112f6b; }
+                        h4 { color: #0054ff; margin-top: 20px; }
+                    </style>
                 </head>
                 <body>
                     ${brdContent}
                 </body>
                 </html>
             `;
-
+            
             const blob = new Blob([htmlContent], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'BRD_Document.html';
+            a.download = 'GoComet_BRD_Document.html';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            
+            showNotification('💾 BRD downloaded successfully!', 'success');
         }
 
+        // Notification system
         function showNotification(message, type) {
             const notification = document.getElementById('notification');
             notification.textContent = message;
-            notification.classList.add(type, 'show');
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
             setTimeout(() => {
                 notification.classList.remove('show');
             }, 4000);
         }
 
-        function startProgressSimulation() {
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                if (progress < 100) {
-                    progress += 10;
-                    document.querySelector('.progress-circle').style.setProperty('--progress', `${progress}%`);
-                    document.querySelector('.progress-text').textContent = `${progress}%`;
-                } else {
-                    clearInterval(progressInterval);
-                }
-            }, 500);
-        }
-
-        function completeProgress(result) {
-            document.getElementById('brd-content').innerHTML = result.brd_content;
-        }
-
-        function resetProgress() {
-            document.querySelector('.progress-circle').style.setProperty('--progress', '0%');
-            document.querySelector('.progress-text').textContent = '0%';
-        }
-    </script>
-</body>
-</html>
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateGenerateButton();
+            
+            // Check if n8n webhook URL is configured
+            if (CONFIG.n8nWebhookUrl === 'YOUR_N8N_WEBHOOK_URL_HERE') {
+                showNotification('⚙️ Remember to configure your n8n webhook URL before deploying', 'info');
+            }
+            
+            console.log('🚀 GoComet BRD AI Agent initialized successfully!');
+            console.log('📡 Webhook URL configured:', CONFIG.n8nWebhookUrl !== 'YOUR_N8N_WEBHOOK_URL_HERE' ? '✅ Yes' : '❌ No');
+        });
