@@ -1,17 +1,16 @@
 name: Deploy to GitHub Pages
 
-# Trigger the workflow on push to main branch
 on:
   push:
     branches:
-      - main
+      - main  # Deploy when pushing to main branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the code from the repository
+      # Step 1: Checkout the code
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -19,14 +18,6 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          branch: gh-pages  # Deploy to gh-pages branch
-          folder: .  # Root directory (if you have a build folder, use that instead)
-          
-      # Optional: Commit the changes (for updates in the deployed site)
-      - name: Commit changes
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          git add .
-          git commit -m "Deploy to GitHub Pages"
-          git push origin gh-pages
+          branch: gh-pages  # Target branch for GitHub Pages
+          folder: .  # Folder to deploy (use build folder if your code is built in one)
+          token: ${{ secrets.GITHUB_TOKEN }}  # Token to allow deployment from GitHub Actions
