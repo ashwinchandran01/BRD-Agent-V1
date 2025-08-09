@@ -1,23 +1,32 @@
-name: Deploy to GitHub Pages
-
+name: Deploy GitHub Pages
 on:
   push:
-    branches:
-      - main  # Deploy when pushing to main branch
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      # Step 1: Checkout the code
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      # Step 2: Set up GitHub Pages action for deployment
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
+      - uses: actions/checkout@v4
+      - uses: actions/upload-pages-artifact@v3
         with:
-          branch: gh-pages  # Target branch for GitHub Pages
-          folder: .  # Folder to deploy (use build folder if your code is built in one)
-          token: ${{ secrets.GITHUB_TOKEN }}  # Token to allow deployment from GitHub Actions
+          path: .   # root has your index.html
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
