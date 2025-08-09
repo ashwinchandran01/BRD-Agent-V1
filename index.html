@@ -467,23 +467,30 @@
 
                 const controller = new AbortController();
                 const to = setTimeout(() => controller.abort(), CONFIG.timeout);
-
-                const res = await fetch(CONFIG.n8nWebhookUrl, { method: 'POST', body: form, signal: controller.signal });
+                
+                const res = await fetch(CONFIG.n8nWebhookUrl, {
+                  method: 'POST',
+                  body: form,
+                  mode: 'cors',
+                  headers: { 'Accept': 'application/json' },
+                  signal: controller.signal
+                });
                 clearTimeout(to);
-
-                if (!res.ok) throw new Error(`Server responded ${res.status}`);
-                const data = await res.json().catch(() => ({}));
-
-                // Expect the webhook to return a drafted BRD as HTML/Markdown/text
-                const content = data.html || data.markdown || data.text ||
-`<h3>Business Requirements Document</h3>
-<h4>1. Overview</h4>
-<p>Generated BRD based on uploaded documents. (No detailed response received from the webhook, showing placeholder.)</p>
-<h4>2. Scope</h4>
-<ul><li>In-scope: Document conversion to BRD, diagrams linking, requirement extraction</li><li>Out-of-scope: Legal vetting, pricing approvals</li></ul>
-<h4>3. Functional Requirements</h4>
-<ol><li>Ingest solution docs and visuals</li><li>Extract user flows & edge cases</li><li>Compose BRD sections with traceability</li></ol>`;
-
+                
+                // Read once, then try JSON
+                const raw = await res.text();
+                let data = {};
+                try { data = JSON.parse(raw); } catch (_) {}
+                
+                // Handle server errors gracefully
+                if (!res.ok) {
+                  throw new Error(`Server responded ${res.status}: ${raw.slice(0, 300)}`);
+                }
+                
+                // Accept JSON or plain HTML/text
+                const content = (data.html || data.markdown || data.text) ? 
+                    (data.html || data.markdown || data.text) : raw;
+                
                 setProgress(97);
                 renderBRD(content, !!data.markdown);
                 finishProcessing();
@@ -547,4 +554,5 @@
     </script>
 </body>
 </html>
+
 
