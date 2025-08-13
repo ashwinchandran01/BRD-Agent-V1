@@ -261,9 +261,10 @@
                     </div>
 
                     <div class="action-buttons">
-                        <button class="btn btn-primary" onclick="openOpenAICanvas()">🎨 Open in Canvas</button>
-                        <button class="btn btn-secondary" onclick="downloadBRD()">💾 Download BRD</button>
-                    </div>
+    <button class="btn btn-primary" onclick="openOpenAICanvas()" disabled>🎨 Open in Canvas Editor</button>
+    <button class="btn btn-secondary" onclick="downloadBRD()" disabled>📥 Download Word Document</button>
+    <button class="btn btn-secondary" onclick="resetAndStartOver()">🔄 Generate New BRD</button>
+</div>
                 </div>
             </div>
         </div>
@@ -277,7 +278,7 @@
         let uploadedFiles = { solution: [], flowchart: [] };
         let processingInterval = null;
         let currentProgress = 0;
-
+let currentBRD = null; // Store current BRD data
         const CONFIG = {
             n8nWebhookUrl: 'https://n8n.delivery-pre-uat.gocomet.com/webhook/e24fafe0-14a1-4c59-9c93-0077bd1684ce',
             timeout: 300000, // 5 minutes
@@ -438,12 +439,20 @@
         }
 
         function finishProcessing() {
-            clearInterval(processingInterval);
-            setProgress(100);
-            document.getElementById('progress-title').textContent = 'Complete';
-            document.getElementById('progress-description').textContent = 'Your BRD has been generated successfully.';
-            showNotification('BRD generated successfully!', 'success');
-            switchTab('canvas');
+    clearInterval(processingInterval);
+    setProgress(100);
+    document.getElementById('progress-title').textContent = 'Complete';
+    document.getElementById('progress-description').textContent = 'Your BRD has been generated successfully.';
+    showNotification('BRD generated successfully!', 'success');
+    
+    // Enable action buttons
+    const canvasBtn = document.querySelector('.btn-primary');
+    const downloadBtn = document.querySelector('.btn-secondary');
+    if (canvasBtn) canvasBtn.disabled = false;
+    if (downloadBtn) downloadBtn.disabled = false;
+    
+    switchTab('canvas');
+}
         }
 
         // -------------------- BRD Generation --------------------
@@ -501,16 +510,23 @@
                   throw new Error(`HTTP ${res.status}`);
                 }
                 
-                const content = data.html ?? data.markdown ?? data.text;
-                if (!content) {
-                  showNotification(`No BRD content in response. Body starts: ${raw.slice(0, 120)}`, 'error');
-                  throw new Error('Missing html/markdown/text in response');
-                }
-                
-                setProgress(97);
-                renderBRD(content, !!data.markdown);
-                finishProcessing();
+                // Store the complete BRD data
+currentBRD = {
+  html: data.html || data.text || '',
+  downloadUrl: data.download_url || data.data?.download_url,
+  filename: data.filename || data.data?.filename || `BRD_${new Date().toISOString().split('T')[0]}.doc`,
+  brdId: data.brd_id || data.data?.brd_id || Date.now()
+};
 
+const content = currentBRD.html;
+if (!content) {
+  showNotification(`No BRD content in response. Body starts: ${raw.slice(0, 120)}`, 'error');
+  throw new Error('Missing html/markdown/text in response');
+}
+
+setProgress(97);
+renderBRD(content, !!data.markdown);
+finishProcessing();
             } catch (err) {
                 clearInterval(processingInterval);
                 console.error(err);
@@ -541,20 +557,185 @@
 
         // -------------------- Actions --------------------
         function openOpenAICanvas() {
-            // Placeholder: open the current BRD content in a new window for now
-            const w = window.open();
-            w.document.write('<!DOCTYPE html><title>BRD Canvas</title>' + document.getElementById('brd-content').outerHTML);
-            w.document.close();
+    if (!currentBRD || !currentBRD.html) {
+        showNotification('No BRD content available for editing', 'error');
+        return;
+    }
+
+    // Create a Gemini-style chat interface
+    const chatWindow = window.open('', '_blank', 'width=1200,height=800');
+    chatWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>BRD Canvas Editor - Powered by AI</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8fafc; }
+                .header { background: #112f6b; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+                .header h1 { font-size: 1.5rem; font-weight: 600; }
+                .close-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 0.5rem; border-radius: 4px; }
+                .close-btn:hover { background: rgba(255,255,255,0.1); }
+                .container { display: flex; height: calc(100vh - 80px); }
+                .brd-panel { width: 50%; padding: 1rem; border-right: 1px solid #e2e8f0; overflow-y: auto; background: white; }
+                .chat-panel { width: 50%; display: flex; flex-direction: column; background: #f8fafc; }
+                .chat-messages { flex: 1; padding: 1rem; overflow-y: auto; }
+                .chat-input-area { padding: 1rem; border-top: 1px solid #e2e8f0; background: white; }
+                .chat-input { width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; resize: vertical; min-height: 80px; }
+                .chat-input:focus { outline: none; border-color: #0054ff; }
+                .send-btn { margin-top: 0.5rem; background: #0054ff; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
+                .send-btn:hover { background: #003e9c; }
+                .send-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+                .message { margin-bottom: 1rem; padding: 1rem; border-radius: 8px; }
+                .message.user { background: #e6f2ff; margin-left: 2rem; }
+                .message.ai { background: white; border: 1px solid #e2e8f0; margin-right: 2rem; }
+                .message-header { font-weight: 600; margin-bottom: 0.5rem; color: #112f6b; }
+                .brd-content { line-height: 1.6; }
+                .brd-content h1, .brd-content h2 { color: #112f6b; margin: 1rem 0 0.5rem 0; }
+                .brd-content h3 { color: #0054ff; margin: 1rem 0 0.5rem 0; }
+                .loading { text-align: center; padding: 1rem; color: #64748b; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>🎨 BRD Canvas Editor - AI Chat</h1>
+                <button class="close-btn" onclick="window.close()">&times;</button>
+            </div>
+            <div class="container">
+                <div class="brd-panel">
+                    <h3 style="margin-bottom: 1rem; color: #112f6b;">Current BRD Content:</h3>
+                    <div class="brd-content">${currentBRD.html}</div>
+                </div>
+                <div class="chat-panel">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message ai">
+                            <div class="message-header">🤖 AI Assistant</div>
+                            <div>Hi! I'm here to help you refine and improve your BRD. You can ask me to:
+                            <br>• Enhance specific sections
+                            <br>• Add more details to requirements
+                            <br>• Improve clarity and structure
+                            <br>• Add missing information
+                            <br><br>What would you like to work on?</div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <textarea id="chatInput" class="chat-input" placeholder="Ask me to improve your BRD... e.g., 'Make the functional requirements more detailed' or 'Add edge cases for the user journey'"></textarea>
+                        <button id="sendBtn" class="send-btn" onclick="sendMessage()">Send Message</button>
+                    </div>
+                </div>
+            </div>
+            <script>
+                function sendMessage() {
+                    const input = document.getElementById('chatInput');
+                    const message = input.value.trim();
+                    if (!message) return;
+                    
+                    // Add user message
+                    addMessage('user', 'You', message);
+                    input.value = '';
+                    
+                    // Add loading message
+                    const loadingId = addMessage('ai', '🤖 AI Assistant', '<div class="loading">Thinking...</div>');
+                    
+                    // Simulate AI response (replace with actual API call)
+                    setTimeout(() => {
+                        const responses = [
+                            "I'll help you improve that section. Here are some suggestions for enhancing your BRD content...",
+                            "Great question! Let me provide more detailed requirements for that functionality...",
+                            "I can help make that section more comprehensive. Here's an enhanced version...",
+                            "That's an important aspect to consider. Let me add some additional details..."
+                        ];
+                        const response = responses[Math.floor(Math.random() * responses.length)];
+                        updateMessage(loadingId, response);
+                    }, 2000);
+                }
+                
+                function addMessage(type, sender, content) {
+                    const messages = document.getElementById('chatMessages');
+                    const messageId = 'msg_' + Date.now();
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = \`message \${type}\`;
+                    messageDiv.id = messageId;
+                    messageDiv.innerHTML = \`
+                        <div class="message-header">\${sender}</div>
+                        <div>\${content}</div>
+                    \`;
+                    messages.appendChild(messageDiv);
+                    messages.scrollTop = messages.scrollHeight;
+                    return messageId;
+                }
+                
+                function updateMessage(messageId, newContent) {
+                    const message = document.getElementById(messageId);
+                    if (message) {
+                        const contentDiv = message.querySelector('div:last-child');
+                        contentDiv.innerHTML = newContent;
+                    }
+                }
+                
+                // Enter key to send
+                document.getElementById('chatInput').addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && e.ctrlKey) {
+                        sendMessage();
+                    }
+                });
+            </script>
+        </body>
+        </html>
+    `);
+    chatWindow.document.close();
+}
         }
 
         function downloadBRD() {
-            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>GoComet BRD</title></head><body>${document.getElementById('brd-content').innerHTML}</body></html>`;
-            const blob = new Blob([html], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = 'GoComet-BRD.html'; a.click();
-            URL.revokeObjectURL(url);
-            showNotification('Downloading BRD...', 'info');
+    if (!currentBRD) {
+        showNotification('No BRD available for download', 'error');
+        return;
+    }
+
+    // If we have a direct download URL from n8n (Word doc)
+    if (currentBRD.downloadUrl) {
+        const link = document.createElement('a');
+        link.href = currentBRD.downloadUrl;
+        link.download = currentBRD.filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showNotification('Downloading Word document...', 'success');
+        return;
+    }
+
+    // Fallback: create Word-compatible HTML
+    const wordHtml = `<!DOCTYPE html>
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'>
+<head>
+    <meta charset="utf-8">
+    <meta name="ProgId" content="Word.Document">
+    <meta name="Generator" content="Microsoft Word 15">
+    <style>
+        body { font-family: Calibri, sans-serif; font-size: 11pt; line-height: 1.15; margin: 1in; }
+        h1 { color: #112f6b; font-size: 18pt; font-weight: bold; }
+        h2 { color: #112f6b; font-size: 14pt; font-weight: bold; }
+        h3 { color: #0054ff; font-size: 12pt; font-weight: bold; }
+        table { border-collapse: collapse; width: 100%; margin: 12pt 0; }
+        th, td { border: 1pt solid #000; padding: 6pt; text-align: left; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+    </style>
+</head>
+<body>${currentBRD.html}</body>
+</html>`;
+    
+    const blob = new Blob([wordHtml], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = currentBRD.filename || 'GoComet-BRD.doc';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showNotification('Downloading Word document...', 'success');
+}
         }
 
         // -------------------- Utils --------------------
@@ -572,6 +753,36 @@
 </body>
 </html>
 
-
-
+function resetAndStartOver() {
+    // Reset all state
+    uploadedFiles = { solution: [], flowchart: [] };
+    currentBRD = null;
+    currentProgress = 0;
+    
+    // Clear file inputs
+    document.getElementById('solution-docs').value = '';
+    document.getElementById('flowchart-files').value = '';
+    
+    // Hide previews
+    document.getElementById('solution-preview').style.display = 'none';
+    document.getElementById('flowchart-preview').style.display = 'none';
+    
+    // Reset progress
+    setProgress(0);
+    document.getElementById('progress-title').textContent = 'Ready to Process';
+    document.getElementById('progress-description').textContent = 'Upload your documents to begin AI analysis';
+    
+    // Disable buttons
+    document.getElementById('generate-btn').disabled = true;
+    const actionButtons = document.querySelectorAll('.action-buttons .btn');
+    actionButtons.forEach(btn => btn.disabled = true);
+    
+    // Reset BRD content
+    document.getElementById('brd-content').innerHTML = '<h3>Business Requirements Document</h3><p><em>🤖 AI-generated BRD content will appear here after processing...</em></p>';
+    
+    // Go back to upload tab
+    switchTab('upload');
+    
+    showNotification('Ready for new BRD generation', 'info');
+}
 
