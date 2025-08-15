@@ -1,324 +1,587 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>GoComet | BRD AI Agent Frontend</title>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-    /* Basic styles for the UI */
-    :root {
-        --bg: #f7fafc;
-        --text: #111827;
-        --muted: #6b7280;
-        --primary: #2563eb;
-        --border: #e5e7eb;
-        --card: #ffffff;
-        --accent: #10b981;
-        --warn: #f59e0b;
-        --danger: #ef4444;
-    }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui,-apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--text); }
-    header { position: sticky; top: 0; z-index: 10; background: var(--card); border-bottom: 1px solid var(--border); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
-    header .title { font-weight: 800; letter-spacing: 0.2px; }
-    header .subtitle { font-size: 12px; color: var(--muted); }
-    .container { max-width: 1100px; margin: 24px auto; padding: 0 16px; display: grid; grid-template-columns: 1.2fr 2fr; gap: 16px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
-    .card .head { padding: 12px 14px; border-bottom: 1px solid var(--border); font-weight: 700; display:flex; align-items: center; justify-content: space-between; }
-    .card .body { padding: 14px; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    label { display:block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-    input, textarea, select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font: inherit; }
-    textarea { min-height: 100px; resize: vertical; }
-    .btns { display: flex; gap: 8px; flex-wrap: wrap; }
-    .btn { cursor: pointer; border-radius: 10px; padding: 10px 12px; border: 1px solid var(--border); background: var(--card); font-weight: 600; }
-    .btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .btn.accent { background: var(--accent); color: #fff; border-color: var(--accent); }
-    .btn.warn { background: var(--warn); color: #fff; border-color: var(--warn); }
-    .btn.danger { background: var(--danger); color: #fff; border-color: var(--danger); }
-    .status { font-size: 12px; color: var(--muted); margin-left: auto; }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GoComet BRD AI Agent</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 990px) { .container { grid-template-columns: 1fr; } .grid { grid-template-columns: 1fr; } }
+        :root {
+            /* GoComet Primary Colors */
+            --primary-50: #f0f6ff;
+            --primary-100: #e6f2ff;
+            --primary-400: #3376ff;
+            --primary-500: #0054ff;
+            --primary-600: #1e5cff; /* added: used on hover */
+            --primary-800: #003e9c;
 
-    #brd-container { min-height: 400px; }
-    #brd-content { line-height: 1.65; }
-    #brd-content h1, #brd-content h2, #brd-content h3 { margin: 0.7em 0 0.4em; }
-    #brd-content ul { padding-left: 1.2em; }
+            /* GoComet Secondary */
+            --secondary-500: #112f6b;
 
-    .notif { position: fixed; right: 16px; bottom: 16px; display:flex; flex-direction: column; gap: 8px; z-index: 50; }
-    .toast { background:#111827; color:#fff; padding:10px 12px; border-radius:10px; box-shadow: 0 8px 24px rgba(0,0,0,.15); font-size: 13px; }
-</style>
+            /* Extended palette */
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e0;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+
+            --success-500: #10b981;
+            --success-600: #059669;
+            --error-500: #ef4444;
+            --warning-500: #f59e0b;
+        }
+
+        body {
+            font-family: 'Proxima Nova', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, var(--primary-50) 0%, var(--gray-50) 100%);
+            color: var(--gray-800);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .header { text-align: center; margin-bottom: 3rem; padding: 2rem 0; }
+        .header h1 {
+            font-size: 2.75rem; font-weight: 700;
+            background: linear-gradient(135deg, var(--secondary-500) 0%, var(--primary-500) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        .header p { font-size: 1.125rem; color: var(--gray-600); max-width: 600px; margin: 0 auto; }
+
+        .main-content { background: white; border-radius: 20px; box-shadow: 0 25px 50px rgba(17, 47, 107, 0.1); overflow: hidden; border: 1px solid var(--gray-200); }
+
+        .tabs { display: flex; background: var(--gray-50); border-bottom: 1px solid var(--gray-200); }
+        .tab { flex: 1; padding: 1.25rem 2rem; text-align: center; cursor: pointer; font-weight: 600; color: var(--gray-600); background: transparent; border: none; transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .tab::before { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg, var(--primary-500), var(--primary-400)); transform: translateX(-100%); transition: transform 0.3s ease; }
+        .tab.active { background: white; color: var(--primary-500); box-shadow: 0 -2px 10px rgba(0, 84, 255, 0.1); }
+        .tab.active::before { transform: translateX(0); }
+        .tab:hover:not(.active) { background: var(--primary-50); color: var(--primary-600); }
+
+        .tab-content { display: none; padding: 3rem; }
+        .tab-content.active { display: block; }
+
+        .upload-section { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 3rem; }
+        .upload-area { border: 2px dashed var(--gray-300); border-radius: 16px; padding: 3rem 2rem; text-align: center; transition: all 0.3s ease; cursor: pointer; background: var(--gray-50); position: relative; overflow: hidden; }
+        .upload-area::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, var(--primary-500), var(--primary-400)); opacity: 0; transition: opacity 0.3s ease; }
+        .upload-area:hover::before, .upload-area.dragover::before { opacity: 0.05; }
+        .upload-area:hover, .upload-area.dragover { border-color: var(--primary-400); background: var(--primary-50); transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0, 84, 255, 0.15); }
+
+        .upload-icon { width: 64px; height: 64px; margin: 0 auto 1.5rem; background: linear-gradient(135deg, var(--primary-500), var(--primary-400)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; position: relative; z-index: 1; }
+        .upload-text { position: relative; z-index: 1; }
+        .upload-text h3 { font-size: 1.375rem; margin-bottom: 0.75rem; color: var(--gray-800); font-weight: 700; }
+        .upload-text p { color: var(--gray-600); margin-bottom: 1rem; font-size: 1rem; }
+        .file-types { font-size: 0.875rem; color: var(--gray-500); font-weight: 500; }
+
+        .file-input { display: none; }
+        .file-preview { margin-top: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, #f0fdf4 0%, var(--primary-50) 100%); border-radius: 12px; border: 1px solid #bbf7d0; }
+        .file-preview h4 { color: #15803d; margin-bottom: 1rem; font-size: 1rem; font-weight: 600; }
+        .file-list { list-style: none; }
+        .file-item { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #bbf7d0; gap: 1rem; }
+        .file-item:last-child { border-bottom: none; }
+        .file-info { flex: 1; text-align: left; }
+        .file-name { color: var(--gray-800); font-weight: 600; display: block; margin-bottom: 0.25rem; }
+        .file-size { color: var(--gray-600); font-size: 0.875rem; }
+        .remove-file { color: var(--error-500); cursor: pointer; font-weight: 600; padding: 0.5rem 1rem; border-radius: 8px; transition: all 0.2s; font-size: 0.875rem; border: 1px solid transparent; background: white; }
+        .remove-file:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+
+        .generate-btn { width: 100%; background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-400) 100%); color: white; border: none; padding: 1.25rem 2rem; font-size: 1.125rem; font-weight: 600; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(0, 84, 255, 0.3); }
+        .generate-btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: left 0.5s; }
+        .generate-btn:hover:not(:disabled)::before { left: 100%; }
+        .generate-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 15px 35px rgba(0, 84, 255, 0.4); }
+        .generate-btn:disabled { background: var(--gray-300); cursor: not-allowed; color: var(--gray-500); box-shadow: none; }
+
+        .progress-section { text-align: center; padding: 4rem 2rem; }
+        .progress-circle { width: 140px; height: 140px; border-radius: 50%; background: conic-gradient(from 0deg, var(--primary-500) 0%, var(--primary-500) var(--progress, 0%), var(--gray-200) var(--progress, 0%)); display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; position: relative; box-shadow: 0 15px 35px rgba(0, 84, 255, 0.2); }
+        .progress-circle::before { content: ''; width: 100px; height: 100px; background: white; border-radius: 50%; position: absolute; box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.1); }
+        .progress-text { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--primary-500), var(--primary-400)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; position: relative; z-index: 1; }
+        .progress-title { font-size: 1.75rem; font-weight: 700; color: var(--gray-800); margin-bottom: 0.75rem; }
+        .progress-description { color: var(--gray-600); margin-bottom: 3rem; font-size: 1.125rem; }
+
+        .progress-steps { display: flex; justify-content: space-between; max-width: 700px; margin: 0 auto; position: relative; }
+        .progress-steps::before { content: ''; position: absolute; top: 20px; left: 0; right: 0; height: 2px; background: var(--gray-200); z-index: 0; }
+        .step { display: flex; flex-direction: column; align-items: center; flex: 1; position: relative; z-index: 1; }
+        .step-number { width: 40px; height: 40px; border-radius: 50%; background: var(--gray-200); display: flex; align-items: center; justify-content: center; font-weight: 700; margin-bottom: 0.75rem; color: var(--gray-500); transition: all 0.3s ease; border: 3px solid white; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
+        .step.active .step-number { background: linear-gradient(135deg, var(--primary-500), var(--primary-400)); color: white; box-shadow: 0 8px 20px rgba(0, 84, 255, 0.4); transform: scale(1.1); }
+        .step.completed .step-number { background: linear-gradient(135deg, var(--success-500), var(--success-600)); color: white; box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3); }
+        .step-label { font-size: 0.875rem; color: var(--gray-600); text-align: center; font-weight: 500; }
+        .step.active .step-label { color: var(--primary-500); font-weight: 600; }
+
+        .canvas-section { text-align: center; }
+        .canvas-section h2 { font-size: 2rem; font-weight: 700; color: var(--gray-800); margin-bottom: 0.75rem; }
+        .canvas-section > p { color: var(--gray-600); margin-bottom: 2rem; font-size: 1.125rem; }
+        .canvas-preview { background: var(--gray-50); border-radius: 16px; padding: 2rem; margin-bottom: 2rem; border: 1px solid var(--gray-200); }
+        .brd-content { text-align: left; background: white; padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); margin-bottom: 1.5rem; border: 1px solid var(--gray-200); }
+        .brd-content h3 { color: var(--secondary-500); margin-bottom: 1.5rem; font-size: 1.5rem; font-weight: 700; }
+        .brd-content h4 { color: var(--primary-500); margin: 1.5rem 0 0.75rem 0; font-size: 1.25rem; font-weight: 600; }
+
+        .action-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .btn { padding: 1rem 2rem; font-size: 1rem; font-weight: 600; border-radius: 12px; cursor: pointer; border: none; transition: all 0.3s ease; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; position: relative; overflow: hidden; }
+        .btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: left 0.5s; }
+        .btn:hover::before { left: 100%; }
+        .btn-primary { background: linear-gradient(135deg, var(--success-500), var(--success-600)); color: white; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(16, 185, 129, 0.4); }
+        .btn-secondary { background: linear-gradient(135deg, var(--secondary-500), var(--primary-800)); color: white; box-shadow: 0 8px 20px rgba(17, 47, 107, 0.3); }
+        .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(17, 47, 107, 0.4); }
+
+        .notification { position: fixed; top: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 12px; color: white; font-weight: 600; z-index: 1000; transform: translateX(100%); transition: transform 0.3s ease; max-width: 350px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2); }
+        .notification.show { transform: translateX(0); }
+        .notification.success { background: linear-gradient(135deg, var(--success-500), var(--success-600)); }
+        .notification.error { background: linear-gradient(135deg, var(--error-500), #dc2626); }
+        .notification.info { background: linear-gradient(135deg, var(--primary-500), var(--primary-400)); }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .header { padding: 1rem 0; margin-bottom: 2rem; }
+            .header h1 { font-size: 2rem; }
+            .upload-section { grid-template-columns: 1fr; gap: 1.5rem; }
+            .upload-area { padding: 2rem 1rem; }
+            .tab-content { padding: 2rem 1rem; }
+            .progress-steps { flex-direction: column; gap: 1.5rem; }
+            .progress-steps::before { display: none; }
+            .action-buttons { flex-direction: column; align-items: center; }
+            .tabs { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in-up { animation: fadeInUp 0.6s ease-out; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .pulse { animation: pulse 2s infinite; }
+    </style>
 </head>
 <body>
-<header>
-    <div>
-        <div class="title">GoComet BRD AI Agent</div>
-        <div class="subtitle">Generate, download, and edit Business Requirement Documents</div>
-    </div>
-    <div class="status" id="status">Ready</div>
-</header>
+    <div class="container">
+        <div class="header fade-in-up">
+            <h1>GoComet BRD AI Agent</h1>
+            <p>Transform your solution documents into comprehensive Business Requirements Documents with AI precision</p>
+        </div>
 
-<div class="container">
-    <div class="card">
-        <div class="head">Inputs</div>
-        <div class="body">
-            <div class="row">
-                <div>
-                    <label>Project Name</label>
-                    <input id="projectName" placeholder="e.g., Diagnostics uplift for IPD/OPD">
+        <div class="main-content fade-in-up">
+            <div class="tabs">
+                <button class="tab active" data-tab="upload" onclick="switchTab('upload')">📁 Upload Documents</button>
+                <button class="tab" data-tab="progress" onclick="switchTab('progress')">⚡ AI Processing</button>
+                <button class="tab" data-tab="canvas" onclick="switchTab('canvas')">📋 Generated BRD</button>
+            </div>
+
+            <!-- Upload Tab -->
+            <div id="upload-tab" class="tab-content active">
+                <div class="upload-section">
+                    <div class="upload-area" onclick="document.getElementById('solution-docs').click()"
+                         ondrop="handleDrop(event, 'solution')"
+                         ondragover="handleDragOver(event)"
+                         ondragenter="handleDragEnter(event, this)"
+                         ondragleave="handleDragLeave(event, this)">
+                        <div class="upload-icon">📄</div>
+                        <div class="upload-text">
+                            <h3>Solution Documents</h3>
+                            <p>Upload your technical solution documentation</p>
+                            <div class="file-types">PDF • DOCX • TXT • MD</div>
+                        </div>
+                        <input type="file" id="solution-docs" class="file-input" multiple accept=".pdf,.docx,.doc,.txt,.md" onchange="handleFileSelect(event, 'solution')" />
+                        <div id="solution-preview" class="file-preview" style="display: none;">
+                            <h4>✅ Selected Files:</h4>
+                            <ul id="solution-files" class="file-list"></ul>
+                        </div>
+                    </div>
+
+                    <div class="upload-area" onclick="document.getElementById('flowchart-files').click()"
+                         ondrop="handleDrop(event, 'flowchart')"
+                         ondragover="handleDragOver(event)"
+                         ondragenter="handleDragEnter(event, this)"
+                         ondragleave="handleDragLeave(event, this)">
+                        <div class="upload-icon">🎨</div>
+                        <div class="upload-text">
+                            <h3>Visual Assets</h3>
+                            <p>Upload flowcharts, diagrams, and wireframes</p>
+                            <div class="file-types">PNG • JPG • PDF • SVG</div>
+                        </div>
+                        <input type="file" id="flowchart-files" class="file-input" multiple accept=".png,.jpg,.jpeg,.pdf,.svg" onchange="handleFileSelect(event, 'flowchart')" />
+                        <div id="flowchart-preview" class="file-preview" style="display: none;">
+                            <h4>✅ Selected Files:</h4>
+                            <ul id="flowchart-files-list" class="file-list"></ul>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label>Owner</label>
-                    <input id="owner" placeholder="e.g., Neeta / Ops">
+
+                <button class="generate-btn" onclick="generateBRD()" id="generate-btn" disabled>🚀 Generate BRD with AI</button>
+            </div>
+
+            <!-- Progress Tab -->
+            <div id="progress-tab" class="tab-content">
+                <div class="progress-section">
+                    <div class="progress-circle pulse" id="progress-circle" style="--progress: 0%">
+                        <div class="progress-text" id="progress-text">0%</div>
+                    </div>
+                    <h2 class="progress-title" id="progress-title">Ready to Process</h2>
+                    <p class="progress-description" id="progress-description">Upload your documents to begin AI analysis</p>
+
+                    <div class="progress-steps">
+                        <div class="step" id="step-upload">
+                            <div class="step-number">1</div>
+                            <div class="step-label">Upload</div>
+                        </div>
+                        <div class="step" id="step-analyze">
+                            <div class="step-number">2</div>
+                            <div class="step-label">Analyze</div>
+                        </div>
+                        <div class="step" id="step-ai">
+                            <div class="step-number">3</div>
+                            <div class="step-label">AI Process</div>
+                        </div>
+                        <div class="step" id="step-generate">
+                            <div class="step-number">4</div>
+                            <div class="step-label">Generate</div>
+                        </div>
+                        <div class="step" id="step-complete">
+                            <div class="step-number">5</div>
+                            <div class="step-label">Complete</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="row">
-                <div>
-                    <label>Summary / Context</label>
-                    <textarea id="summary" placeholder="Short context for BRD…"></textarea>
+
+            <!-- Canvas Tab -->
+            <div id="canvas-tab" class="tab-content">
+                <div class="canvas-section">
+                    <h2>🎯 Generated BRD Document</h2>
+                    <p>Your AI-powered Business Requirements Document is ready for review and collaboration</p>
+
+                    <div class="canvas-preview">
+                        <div id="brd-content" class="brd-content">
+                            <h3>Business Requirements Document</h3>
+                            <p><em>🤖 AI-generated BRD content will appear here after processing...</em></p>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="openOpenAICanvas()">🎨 Open in Canvas</button>
+                        <button class="btn btn-secondary" onclick="downloadBRD()">💾 Download BRD</button>
+                    </div>
                 </div>
-                <div>
-                    <label>Key Requirements</label>
-                    <textarea id="requirements" placeholder="Bullets…"></textarea>
-                </div>
-            </div>
-            <div class="btns" style="margin-top:8px;">
-                <button class="btn primary" onclick="generateBRD()">Generate BRD</button>
-                <button class="btn" onclick="openOpenAICanvas()">Open in canvas</button>
-                <button class="btn accent" onclick="downloadBRD()">Download BRD</button>
             </div>
         </div>
     </div>
 
-    <div class="card" id="brd-container">
-        <div class="head">Preview</div>
-        <div class="body">
-            <div id="brd-content">Fill inputs and click Generate to see preview…</div>
-        </div>
-    </div>
-</div>
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
 
-<div class="notif" id="notif"></div>
+    <script>
+        // -------------------- State --------------------
+        let uploadedFiles = { solution: [], flowchart: [] };
+        let processingInterval = null;
+        let currentProgress = 0;
 
-<script>
-const statusEl = document.getElementById('status');
-const notif = document.getElementById('notif');
-
-function setStatus(text) { statusEl.textContent = text; }
-function showNotification(msg, type='info') {
-  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
-  notif.appendChild(t); setTimeout(()=>{ t.remove(); }, 3000);
-}
-
-async function generateBRD() {
-  const payload = {
-    projectName: document.getElementById('projectName').value.trim(),
-    owner: document.getElementById('owner').value.trim(),
-    summary: document.getElementById('summary').value.trim(),
-    requirements: document.getElementById('requirements').value.trim()
-  };
-  setStatus('Generating…');
-  try {
-    // Change to your n8n endpoint
-    const res = await fetch('https://example.com/webhook/brd', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept':'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    window.lastBRD = data; // keep the full server response
-    const html = data.html || data.markdown || data.text || '<p>(no content)</p>';
-    document.getElementById('brd-content').innerHTML = html;
-    showNotification('BRD generated');
-    setStatus('Ready');
-  } catch (e) {
-    console.error(e); setStatus('Error'); showNotification('Failed to generate BRD', 'error');
-  }
-}
-
-function downloadBRD() {
-  // Placeholder; real implementation added by patch below
-  const html = document.getElementById('brd-content').innerHTML;
-  const blob = new Blob([html], {type:'text/html'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'GoComet-BRD.html'; a.click();
-  URL.revokeObjectURL(url);
-}
-
-function openOpenAICanvas() {
-  // Placeholder; real implementation added by patch below
-  const w = window.open('', '_blank');
-  w.document.write('<p>Canvas placeholder</p>');
-  w.document.close();
-}
-</script>
-
-<!-- >>> BEGIN GoComet BRD Patch (2025-08-15) -->
-<script>
-(() => {
-  // Hold on to the latest BRD payload from n8n
-  window.lastBRD = window.lastBRD || null;
-
-  // Monkey-patch fetch to capture JSON responses that look like our BRD.
-  const _fetch = window.fetch;
-  window.fetch = async function(...args) {
-    const res = await _fetch.apply(this, args);
-    try {
-      const clone = res.clone();
-      const ct = (clone.headers && clone.headers.get && clone.headers.get('content-type')) || '';
-      if (ct.includes('application/json')) {
-        const data = await clone.json();
-        if (data && (data.download_url || data.html || data.markdown || data.text)) {
-          window.lastBRD = data;
-        }
-      }
-    } catch (e) {
-      // ignore
-    }
-    return res;
-  };
-
-  // Override: reliable .doc download using n8n's encoded output
-  window.downloadBRD = function downloadBRD() {
-    try {
-      if (window.lastBRD && window.lastBRD.download_url) {
-        const a = document.createElement('a');
-        a.href = window.lastBRD.download_url;
-        a.download = window.lastBRD.filename || 'GoComet-BRD.doc';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        if (window.showNotification) {
-          window.showNotification('Downloading BRD (.doc) from server output…', 'info');
-        }
-        return;
-      }
-    } catch (e) {
-      // fall through to HTML fallback
-    }
-
-    // Fallback: package current HTML content for download
-    const brdEl = document.getElementById('brd-content') || document.querySelector('[data-brd-content], #brd, main');
-    const bodyHtml = brdEl ? brdEl.innerHTML : document.body.innerHTML;
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>GoComet BRD</title></head><body>${bodyHtml}</body></html>`;
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'GoComet-BRD.html'; a.click();
-    URL.revokeObjectURL(url);
-    if (window.showNotification) {
-      window.showNotification('Downloading BRD (HTML fallback)…', 'info');
-    }
-  };
-
-  // Override: open an in-app "canvas" editor with optional Gemini wiring via n8n
-  window.openOpenAICanvas = function openOpenAICanvas() {
-    const contentEl = document.getElementById('brd-content') || document.querySelector('[data-brd-content], #brd, main');
-    const content = contentEl ? contentEl.innerHTML : '<p>(empty)</p>';
-    const w = window.open('', '_blank', 'noopener,noreferrer,width=1280,height=820');
-    const safeBRD = content;
-
-    w.document.write(`<!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8"/>
-      <title>BRD Canvas</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <style>
-        :root { --b:#e2e8f0; --bg:#f8fafc; --card:#fff; }
-        * { box-sizing: border-box; }
-        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); margin:0; }
-        .wrap { display:grid; grid-template-columns: 2fr 1fr; gap:16px; padding:16px; }
-        .editor { background:var(--card); border:1px solid var(--b); border-radius:12px; padding:16px; height:80vh; overflow:auto; }
-        .editor[contenteditable="true"] { outline:none; }
-        .panel { background:var(--card); border:1px solid var(--b); border-radius:12px; padding:16px; height:80vh; display:flex; flex-direction:column; }
-        .controls { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
-        .btn { padding:10px 12px; border-radius:10px; border:1px solid var(--b); background:#0ea5e9; color:#fff; font-weight:600; cursor:pointer; }
-        .btn.secondary { background:#6366f1; }
-        .btn.ghost { background:#fff; color:#0f172a; }
-        textarea { width:100%; min-height:120px; resize:vertical; font:inherit; padding:10px; border-radius:10px; border:1px solid var(--b); }
-        .chat { flex:1; overflow:auto; border-top:1px solid var(--b); margin-top:8px; padding-top:8px; font-size:14px; }
-        .msg { padding:8px; border-radius:8px; margin:6px 0; }
-        .user { background:#f1f5f9; }
-        .ai { background:#eff6ff; }
-      </style>
-    </head>
-    <body>
-      <div class="wrap">
-        <div id="canvas" class="editor" contenteditable="true">${safeBRD}</div>
-        <div class="panel">
-          <div class="controls">
-            <button class="btn" id="apply">Apply suggestion</button>
-            <button class="btn secondary" id="downloadDoc">Download .doc</button>
-            <button class="btn ghost" id="copyHtml">Copy HTML</button>
-          </div>
-          <label style="font-weight:600;">Ask Gemini to revise:</label>
-          <textarea id="prompt" placeholder="e.g., Tighten Objectives to two sentences and make Success Criteria measurable."></textarea>
-          <div class="chat" id="chat"></div>
-        </div>
-      </div>
-      <script>
-        const chat = document.getElementById('chat');
-        const promptEl = document.getElementById('prompt');
-        const canvas = document.getElementById('canvas');
-
-        function postMsg(text, who) {
-          const div = document.createElement('div');
-          div.className = 'msg ' + (who === 'ai' ? 'ai' : 'user');
-          div.textContent = text;
-          chat.appendChild(div);
-          chat.scrollTop = chat.scrollHeight;
-        }
-
-        document.getElementById('apply').onclick = async () => {
-          const prompt = promptEl.value.trim();
-          if (!prompt) return;
-          postMsg(prompt, 'user');
-
-          // TODO: Wire this to your n8n Vertex/Gemini webhook to return revised HTML.
-          // Example:
-          // const res = await fetch('https://<your-n8n>/webhook/brd-refine', {
-          //   method: 'POST',
-          //   headers: {'Content-Type':'application/json', 'Accept':'application/json'},
-          //   body: JSON.stringify({ html: canvas.innerHTML, prompt })
-          // });
-          // const data = await res.json(); // { html: "<updated...>" }
-          // canvas.innerHTML = data.html;
-
-          postMsg('Sent to Gemini (demo). Replace with your n8n refine endpoint to get real edits back.', 'ai');
-        };
-
-        document.getElementById('downloadDoc').onclick = () => {
-          try {
-            const openerData = window.opener && window.opener.lastBRD;
-            if (openerData && openerData.download_url) {
-              const a = document.createElement('a');
-              a.href = openerData.download_url;
-              a.download = openerData.filename || 'GoComet-BRD.doc';
-              a.click();
-              return;
+        const CONFIG = {
+            n8nWebhookUrl: 'https://n8n.delivery-pre-uat.gocomet.com/webhook/e24fafe0-14a1-4c59-9c93-0077bd1684ce',
+            timeout: 300000, // 5 minutes
+            maxFileSize: 10 * 1024 * 1024,
+            allowedFileTypes: {
+                solution: ['.pdf', '.docx', '.doc', '.txt', '.md'],
+                flowchart: ['.png', '.jpg', '.jpeg', '.pdf', '.svg']
             }
-          } catch {}
-          const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>GoComet BRD</title></head><body>' + canvas.innerHTML + '</body></html>';
-          const blob = new Blob([html], {type:'text/html'});
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url; a.download = 'GoComet-BRD.html'; a.click();
-          URL.revokeObjectURL(url);
         };
 
-        document.getElementById('copyHtml').onclick = async () => {
-          await navigator.clipboard.writeText(canvas.innerHTML);
-          postMsg('Copied current HTML to clipboard.', 'ai');
-        };
-      <\/script>
-    </body>
-    </html>`);
-    w.document.close();
-  };
-})();
-</script>
-<!-- <<< END GoComet BRD Patch -->
+        // -------------------- Tabs --------------------
+        function switchTab(tabName) {
+            // deactivate all
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            // activate button
+            const btn = document.querySelector(`.tab[data-tab="${tabName}"]`);
+            if (btn) btn.classList.add('active');
+            // activate content
+            const content = document.getElementById(`${tabName}-tab`);
+            if (content) content.classList.add('active');
+        }
 
+        // -------------------- Drag & Drop --------------------
+        function handleDragOver(e) { e.preventDefault(); }
+        function handleDragEnter(e, el) { e.preventDefault(); el.classList.add('dragover'); }
+        function handleDragLeave(e, el) { e.preventDefault(); if (!el.contains(e.relatedTarget)) el.classList.remove('dragover'); }
+        function handleDrop(e, type) {
+            e.preventDefault();
+            const uploadArea = e.target.closest('.upload-area');
+            if (uploadArea) uploadArea.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            addFiles(files, type);
+        }
+
+        function handleFileSelect(e, type) {
+            const files = Array.from(e.target.files);
+            addFiles(files, type);
+            // reset the input so selecting the same file again still fires change
+            e.target.value = '';
+        }
+
+        function addFiles(files, type) {
+            const allowedTypes = CONFIG.allowedFileTypes[type];
+            const validFiles = [];
+            files.forEach(file => {
+                if (file.size > CONFIG.maxFileSize) {
+                    showNotification(`File "${file.name}" is too large. Max size: ${CONFIG.maxFileSize / 1024 / 1024}MB`, 'error');
+                    return;
+                }
+                const ext = '.' + file.name.split('.').pop().toLowerCase();
+                if (!allowedTypes.includes(ext)) {
+                    showNotification(`File type "${ext}" not allowed for ${type} documents`, 'error');
+                    return;
+                }
+                const dup = uploadedFiles[type].some(f => f.name === file.name && f.size === file.size);
+                if (!dup) { validFiles.push(file); uploadedFiles[type].push(file); }
+            });
+
+            if (validFiles.length) {
+                updateFilePreview(type);
+                updateGenerateButton();
+                showNotification(`${validFiles.length} file(s) uploaded successfully!`, 'success');
+            }
+        }
+
+        function updateFilePreview(type) {
+            const preview = document.getElementById(`${type}-preview`);
+            const list = document.getElementById(type === 'solution' ? 'solution-files' : 'flowchart-files-list');
+            if (!preview || !list) return;
+
+            const files = uploadedFiles[type];
+            if (!files.length) { preview.style.display = 'none'; list.innerHTML = ''; return; }
+
+            preview.style.display = 'block';
+            list.innerHTML = '';
+            files.forEach((file, idx) => {
+                const li = document.createElement('li');
+                li.className = 'file-item';
+
+                const info = document.createElement('div');
+                info.className = 'file-info';
+                const name = document.createElement('span');
+                name.className = 'file-name';
+                name.textContent = file.name;
+                const size = document.createElement('span');
+                size.className = 'file-size';
+                size.textContent = formatBytes(file.size);
+                info.appendChild(name); info.appendChild(size);
+
+                const rm = document.createElement('button');
+                rm.className = 'remove-file';
+                rm.textContent = 'Remove';
+                rm.onclick = () => removeFile(type, idx);
+
+                li.appendChild(info);
+                li.appendChild(rm);
+                list.appendChild(li);
+            });
+        }
+
+        function removeFile(type, index) {
+            uploadedFiles[type].splice(index, 1);
+            updateFilePreview(type);
+            updateGenerateButton();
+            showNotification('File removed.', 'info');
+        }
+
+        function updateGenerateButton() {
+            const hasAnyFiles = uploadedFiles.solution.length + uploadedFiles.flowchart.length > 0;
+            document.getElementById('generate-btn').disabled = !hasAnyFiles;
+        }
+
+        // -------------------- Notifications --------------------
+        let notifyTimeout;
+        function showNotification(message, kind = 'info') {
+            const n = document.getElementById('notification');
+            n.textContent = message;
+            n.className = `notification show ${kind}`;
+            clearTimeout(notifyTimeout);
+            notifyTimeout = setTimeout(() => n.className = 'notification', 3500);
+        }
+
+        // -------------------- Progress UI --------------------
+        function setProgress(pct) {
+            currentProgress = Math.max(0, Math.min(100, pct));
+            const circle = document.getElementById('progress-circle');
+            const text = document.getElementById('progress-text');
+            if (circle) circle.style.setProperty('--progress', currentProgress + '%');
+            if (text) text.textContent = currentProgress + '%';
+
+            // steps
+            const steps = [
+                { id: 'step-upload', threshold: 5 },
+                { id: 'step-analyze', threshold: 30 },
+                { id: 'step-ai', threshold: 60 },
+                { id: 'step-generate', threshold: 90 },
+                { id: 'step-complete', threshold: 100 }
+            ];
+            steps.forEach((s, i) => {
+                const el = document.getElementById(s.id);
+                if (!el) return;
+                el.classList.toggle('active', currentProgress < s.threshold && currentProgress >= (i ? steps[i-1].threshold : 0));
+                el.classList.toggle('completed', currentProgress >= s.threshold);
+            });
+        }
+
+        function startFakeProcessing() {
+            switchTab('progress');
+            document.getElementById('progress-title').textContent = 'Processing your files...';
+            document.getElementById('progress-description').textContent = 'Extracting content, analyzing flows, and drafting the BRD.';
+            setProgress(5);
+            clearInterval(processingInterval);
+            processingInterval = setInterval(() => {
+                if (currentProgress >= 95) return; // wait for finalization
+                setProgress(currentProgress + Math.ceil(Math.random() * 7));
+            }, 700);
+        }
+
+        function finishProcessing() {
+            clearInterval(processingInterval);
+            setProgress(100);
+            document.getElementById('progress-title').textContent = 'Complete';
+            document.getElementById('progress-description').textContent = 'Your BRD has been generated successfully.';
+            showNotification('BRD generated successfully!', 'success');
+            switchTab('canvas');
+        }
+
+        // -------------------- BRD Generation --------------------
+        async function generateBRD() {
+            try {
+                // Ensure at least one file
+                if ((uploadedFiles.solution.length + uploadedFiles.flowchart.length) === 0) {
+                    showNotification('Please add at least one file.', 'error');
+                    return;
+                }
+
+                startFakeProcessing();
+
+                // Build multipart form data
+                const form = new FormData();
+                uploadedFiles.solution.forEach(f => form.append('solution_docs', f));
+                uploadedFiles.flowchart.forEach(f => form.append('visual_assets', f));
+
+                // Optional: add any metadata
+                form.append('source', 'gocomet-brd-ui');
+
+                const controller = new AbortController();
+                const to = setTimeout(() => controller.abort(), CONFIG.timeout);
+                
+                let res, raw = '';
+                try {
+                  res = await fetch(CONFIG.n8nWebhookUrl, {
+                    method: 'POST',
+                    body: form,
+                    mode: 'cors',
+                    headers: { 'Accept': 'application/json' }, // don't set Content-Type
+                    signal: controller.signal,
+                  });
+                  raw = await res.text();
+                } catch (e) {
+                  clearTimeout(to);
+                  showNotification(`Network error: ${e.message}`, 'error');
+                  throw e;
+                }
+                clearTimeout(to);
+                
+                let data = {};
+                try {
+                  data = JSON.parse(raw); window.lastBRD = data; // store entire response for Download BRD
+                  // n8n sometimes returns an array if the responder is set to "All items"
+                  if (Array.isArray(data)) data = data[0] || {};
+                } catch {
+                  // Not JSON? show a helpful peek and bail
+                  showNotification(`Unexpected response: ${raw.slice(0, 200)}`, 'error');
+                  throw new Error('Non-JSON response from server');
+                }
+                
+                if (!res.ok) {
+                  showNotification(`HTTP ${res.status}: ${raw.slice(0, 300)}`, 'error');
+                  throw new Error(`HTTP ${res.status}`);
+                }
+                
+                const content = data.html ?? data.markdown ?? data.text;
+                if (!content) {
+                  showNotification(`No BRD content in response. Body starts: ${raw.slice(0, 120)}`, 'error');
+                  throw new Error('Missing html/markdown/text in response');
+                }
+                
+                setProgress(97);
+                renderBRD(content, !!data.markdown);
+                finishProcessing();
+
+            } catch (err) {
+                clearInterval(processingInterval);
+                console.error(err);
+                setProgress(0);
+                document.getElementById('progress-title').textContent = 'Processing failed';
+                document.getElementById('progress-description').textContent = 'Please try again or contact support.';
+                showNotification(`Failed to generate BRD: ${err.message}`, 'error');
+            }
+        }
+
+        function renderBRD(content, isMarkdown = false) {
+            const target = document.getElementById('brd-content');
+            if (!target) return;
+            if (isMarkdown) {
+                // minimal markdown to HTML conversion for headings/paragraphs (no external libs)
+                const html = content
+                    .replace(/^###\s?(.*)$/gm, '<h4>$1</h4>')
+                    .replace(/^##\s?(.*)$/gm, '<h3>$1</h3>')
+                    .replace(/^#\s?(.*)$/gm, '<h2>$1</h2>')
+                    .replace(/^\*\s(.*)$/gm, '<li>$1</li>')
+                    .replace(/\n\n/g, '</p><p>')
+                    .replace(/^(?!<h\d|<li|<ul|<ol|<p|<\/)(.*)$/gm, '<p>$1</p>');
+                target.innerHTML = `<div>${html}</div>`;
+            } else {
+                target.innerHTML = content;
+            }
+        }
+
+        // -------------------- Actions --------------------
+        function openOpenAICanvas() {
+            // Placeholder: open the current BRD content in a new window for now
+            const w = window.open();
+            w.document.write('<!DOCTYPE html><title>BRD Canvas</title>' + document.getElementById('brd-content').outerHTML);
+            w.document.close();
+        }
+
+        function downloadBRD() {
+            if (window.lastBRD && window.lastBRD.download_url) {
+                const a = document.createElement('a');
+                a.href = window.lastBRD.download_url;
+                a.download = window.lastBRD.filename || 'GoComet-BRD.doc';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                return;
+            }
+            const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>GoComet BRD</title></head><body>' +
+                (document.getElementById('brd-content')?.innerHTML || '') +
+                '</body></html>';
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'GoComet-BRD.html'; a.click();
+            URL.revokeObjectURL(url);
+            showNotification('Downloading BRD...', 'info');
+        }
+
+        // -------------------- Utils --------------------
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024, sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Initialize UI
+        updateGenerateButton();
+        setProgress(0);
+    </script>
 </body>
 </html>
+
+
+
