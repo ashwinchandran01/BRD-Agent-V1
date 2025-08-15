@@ -548,25 +548,91 @@
         }
 
         function downloadBRD() {
-            if (window.lastBRD && window.lastBRD.download_url) {
+              const resp = window.lastBRD || {};
+            
+              // 1) data URL provided by backend (preferred)
+              if (resp.download_url) {
                 const a = document.createElement('a');
-                a.href = window.lastBRD.download_url;
-                a.download = window.lastBRD.filename || 'GoComet-BRD.doc';
+                a.href = resp.download_url; // e.g. data:application/msword;base64,....
+                a.download = resp.filename || 'GoComet-BRD.doc';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
+                showNotification && showNotification('Downloading BRD (.doc)…', 'info');
                 return;
+              }
+            
+              // 2) direct URL to a file
+              if (resp.fileUrl) {
+                fetch(resp.fileUrl)
+                  .then(r => r.blob())
+                  .then(blob => {
+                    const a = document.createElement('a');
+                    const url = URL.createObjectURL(blob);
+                    a.href = url;
+                    a.download = resp.filename || 'GoComet-BRD.doc';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  })
+                  .catch(() => fallbackHtmlDownload());
+                return;
+              }
+            
+              // 3) raw base64 inside n8n "binary" (very common)
+              //    supports: binary.document.data, binary.data.data
+              const b = resp.binary || {};
+              const b64 =
+                (b.document && (b.document.data || b.document.data?.data)) ||
+                (b.data && (b.data.data || b.data?.data)) ||
+                null;
+            
+              if (b64) {
+                const fname =
+                  (b.document && (b.document.fileName || b.document.fileName)) ||
+                  (b.data && (b.data.fileName || b.data.fileName)) ||
+                  resp.filename ||
+                  'GoComet-BRD.doc';
+            
+                // Guess the correct MIME
+                const mime =
+                  (b.document && b.document.mimeType) ||
+                  (b.data && b.data.mimeType) ||
+                  'application/msword';
+            
+                const blob = base64ToBlob(b64, mime);
+                const a = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                a.href = url;
+                a.download = fname;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showNotification && showNotification('Downloading BRD (.doc)…', 'info');
+                return;
+              }
+            
+              // 4) Fallback: download current HTML preview
+              fallbackHtmlDownload();
+            
+              function fallbackHtmlDownload() {
+                const html =
+                  '<!DOCTYPE html><html><head><meta charset="utf-8"><title>GoComet BRD</title></head><body>' +
+                  (document.getElementById('brd-content')?.innerHTML || '') +
+                  '</body></html>';
+                const blob = new Blob([html], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'GoComet-BRD.html';
+                a.click();
+                URL.revokeObjectURL(url);
+                showNotification && showNotification('Downloading BRD (HTML fallback)…', 'info');
+              }
             }
-            const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>GoComet BRD</title></head><body>' +
-                (document.getElementById('brd-content')?.innerHTML || '') +
-                '</body></html>';
-            const blob = new Blob([html], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = 'GoComet-BRD.html'; a.click();
-            URL.revokeObjectURL(url);
-            showNotification('Downloading BRD...', 'info');
-        }
+
 
         // -------------------- Utils --------------------
         function formatBytes(bytes) {
@@ -575,6 +641,16 @@
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
+       
+        function base64ToBlob(base64, mime = 'application/octet-stream') {
+          // handle possible data URL prefix
+          const pure = base64.includes(',') ? base64.split(',')[1] : base64;
+          const byteChars = atob(pure);
+          const byteNums = new Array(byteChars.length);
+          for (let i = 0; i < byteChars.length; i++) byteNums[i] = byteChars.charCodeAt(i);
+          const byteArray = new Uint8Array(byteNums);
+          return new Blob([byteArray], { type: mime });
+        }
 
         // Initialize UI
         updateGenerateButton();
@@ -582,6 +658,7 @@
     </script>
 </body>
 </html>
+
 
 
 
