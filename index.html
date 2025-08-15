@@ -13,7 +13,7 @@
             --primary-100: #e6f2ff;
             --primary-400: #3376ff;
             --primary-500: #0054ff;
-            --primary-600: #1e5cff; /* hover */
+            --primary-600: #1e5cff; /* added: used on hover */
             --primary-800: #003e9c;
 
             /* GoComet Secondary */
@@ -290,11 +290,14 @@
 
         // -------------------- Tabs --------------------
         function switchTab(tabName) {
+            // deactivate all
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            const btn = document.querySelector(\`.tab[data-tab="\${tabName}"]\`);
+            // activate button
+            const btn = document.querySelector(`.tab[data-tab="${tabName}"]`);
             if (btn) btn.classList.add('active');
-            const content = document.getElementById(\`\${tabName}-tab\`);
+            // activate content
+            const content = document.getElementById(`${tabName}-tab`);
             if (content) content.classList.add('active');
         }
 
@@ -313,7 +316,8 @@
         function handleFileSelect(e, type) {
             const files = Array.from(e.target.files);
             addFiles(files, type);
-            e.target.value = ''; // allow reselect
+            // reset the input so selecting the same file again still fires change
+            e.target.value = '';
         }
 
         function addFiles(files, type) {
@@ -321,12 +325,12 @@
             const validFiles = [];
             files.forEach(file => {
                 if (file.size > CONFIG.maxFileSize) {
-                    showNotification(\`File "\${file.name}" is too large. Max size: \${CONFIG.maxFileSize / 1024 / 1024}MB\`, 'error');
+                    showNotification(`File "${file.name}" is too large. Max size: ${CONFIG.maxFileSize / 1024 / 1024}MB`, 'error');
                     return;
                 }
                 const ext = '.' + file.name.split('.').pop().toLowerCase();
                 if (!allowedTypes.includes(ext)) {
-                    showNotification(\`File type "\${ext}" not allowed for \${type} documents\`, 'error');
+                    showNotification(`File type "${ext}" not allowed for ${type} documents`, 'error');
                     return;
                 }
                 const dup = uploadedFiles[type].some(f => f.name === file.name && f.size === file.size);
@@ -336,12 +340,12 @@
             if (validFiles.length) {
                 updateFilePreview(type);
                 updateGenerateButton();
-                showNotification(\`\${validFiles.length} file(s) uploaded successfully!\`, 'success');
+                showNotification(`${validFiles.length} file(s) uploaded successfully!`, 'success');
             }
         }
 
         function updateFilePreview(type) {
-            const preview = document.getElementById(\`\${type}-preview\`);
+            const preview = document.getElementById(`${type}-preview`);
             const list = document.getElementById(type === 'solution' ? 'solution-files' : 'flowchart-files-list');
             if (!preview || !list) return;
 
@@ -392,7 +396,7 @@
         function showNotification(message, kind = 'info') {
             const n = document.getElementById('notification');
             n.textContent = message;
-            n.className = \`notification show \${kind}\`;
+            n.className = `notification show ${kind}`;
             clearTimeout(notifyTimeout);
             notifyTimeout = setTimeout(() => n.className = 'notification', 3500);
         }
@@ -405,6 +409,7 @@
             if (circle) circle.style.setProperty('--progress', currentProgress + '%');
             if (text) text.textContent = currentProgress + '%';
 
+            // steps
             const steps = [
                 { id: 'step-upload', threshold: 5 },
                 { id: 'step-analyze', threshold: 30 },
@@ -427,7 +432,7 @@
             setProgress(5);
             clearInterval(processingInterval);
             processingInterval = setInterval(() => {
-                if (currentProgress >= 95) return;
+                if (currentProgress >= 95) return; // wait for finalization
                 setProgress(currentProgress + Math.ceil(Math.random() * 7));
             }, 700);
         }
@@ -444,6 +449,7 @@
         // -------------------- BRD Generation --------------------
         async function generateBRD() {
             try {
+                // Ensure at least one file
                 if ((uploadedFiles.solution.length + uploadedFiles.flowchart.length) === 0) {
                     showNotification('Please add at least one file.', 'error');
                     return;
@@ -451,67 +457,56 @@
 
                 startFakeProcessing();
 
-                // Build FormData — do NOT set Content-Type manually
-                const fd = new FormData();
+                // Build multipart form data
+                const form = new FormData();
+                uploadedFiles.solution.forEach(f => form.append('solution_docs', f));
+                uploadedFiles.flowchart.forEach(f => form.append('visual_assets', f));
 
-                const appendFileVariants = (name, file) => {
-                  fd.append(name, file, file.name);
-                  fd.append(`${name}[]`, file, file.name);
-                };
-
-                uploadedFiles.solution.forEach((f, i) => {
-                  appendFileVariants('solution_docs', f);
-                  appendFileVariants('files', f);
-                  appendFileVariants('file', f);
-                  fd.append(`solution_docs[${i}]`, f, f.name);
-                });
-
-                uploadedFiles.flowchart.forEach((f, i) => {
-                  appendFileVariants('visual_assets', f);
-                  appendFileVariants('images', f);
-                  appendFileVariants('image', f);
-                  fd.append(`visual_assets[${i}]`, f, f.name);
-                });
-
-                fd.append('source', 'gocomet-brd-ui');
+                // Optional: add any metadata
+                form.append('source', 'gocomet-brd-ui');
 
                 const controller = new AbortController();
                 const to = setTimeout(() => controller.abort(), CONFIG.timeout);
-
+                
                 let res, raw = '';
                 try {
                   res = await fetch(CONFIG.n8nWebhookUrl, {
                     method: 'POST',
-                    body: fd,
-                    signal: controller.signal
+                    body: form,
+                    mode: 'cors',
+                    headers: { 'Accept': 'application/json' }, // don't set Content-Type
+                    signal: controller.signal,
                   });
-                  raw = await res.text(); // tolerate text
+                  raw = await res.text();
                 } catch (e) {
                   clearTimeout(to);
                   showNotification(`Network error: ${e.message}`, 'error');
                   throw e;
                 }
                 clearTimeout(to);
-
-                // Parse result safely; handle arrays from “All items”
+                
                 let data = {};
-                try { data = JSON.parse(raw); } catch { data = { text: raw }; }
-                if (typeof data === 'string') { try { data = JSON.parse(data); } catch {} }
-                if (Array.isArray(data)) data = data[0] || {};
-                window.lastBRD = data;
-                console.log('[BRD] lastBRD →', data);
-
+                try {
+                  data = JSON.parse(raw);
+                  // n8n sometimes returns an array if the responder is set to "All items"
+                  if (Array.isArray(data)) data = data[0] || {};
+                } catch {
+                  // Not JSON? show a helpful peek and bail
+                  showNotification(`Unexpected response: ${raw.slice(0, 200)}`, 'error');
+                  throw new Error('Non-JSON response from server');
+                }
+                
                 if (!res.ok) {
                   showNotification(`HTTP ${res.status}: ${raw.slice(0, 300)}`, 'error');
                   throw new Error(`HTTP ${res.status}`);
                 }
-
-                const content = data.html ?? data.markdown ?? data.text ?? '';
+                
+                const content = data.html ?? data.markdown ?? data.text;
                 if (!content) {
                   showNotification(`No BRD content in response. Body starts: ${raw.slice(0, 120)}`, 'error');
                   throw new Error('Missing html/markdown/text in response');
                 }
-
+                
                 setProgress(97);
                 renderBRD(content, !!data.markdown);
                 finishProcessing();
@@ -530,7 +525,7 @@
             const target = document.getElementById('brd-content');
             if (!target) return;
             if (isMarkdown) {
-                // minimal md→html
+                // minimal markdown to HTML conversion for headings/paragraphs (no external libs)
                 const html = content
                     .replace(/^###\s?(.*)$/gm, '<h4>$1</h4>')
                     .replace(/^##\s?(.*)$/gm, '<h3>$1</h3>')
@@ -546,71 +541,20 @@
 
         // -------------------- Actions --------------------
         function openOpenAICanvas() {
+            // Placeholder: open the current BRD content in a new window for now
             const w = window.open();
             w.document.write('<!DOCTYPE html><title>BRD Canvas</title>' + document.getElementById('brd-content').outerHTML);
             w.document.close();
         }
 
         function downloadBRD() {
-          const resp = window.lastBRD || {};
-          try {
-            // 1) data URL from backend (preferred)
-            if (resp.download_url) {
-              triggerDownload(resp.download_url, resp.filename || 'GoComet-BRD.doc');
-              showNotification('Downloading BRD (.doc)…', 'info');
-              return;
-            }
-
-            // 2) direct URL
-            if (resp.fileUrl) {
-              fetch(resp.fileUrl)
-                .then(r => r.blob())
-                .then(blob => triggerBlob(blob, resp.filename || 'GoComet-BRD.doc'))
-                .catch(err => { console.warn('[BRD] fileUrl fetch failed', err); fallbackHtml(); });
-              return;
-            }
-
-            // 3) n8n binary base64 (common)
-            const b = resp.binary || {};
-            const node = b.document || b.data || b.file || null;
-            const base64 = node ? (node.data?.data || node.data || node.file || null) : null;
-
-            if (base64) {
-              const mime = node.mimeType || 'application/msword';
-              const name = node.fileName || node.filename || resp.filename || 'GoComet-BRD.doc';
-              const blob = base64ToBlob(base64, mime);
-              triggerBlob(blob, name);
-              showNotification('Downloading BRD (.doc)…', 'info');
-              return;
-            }
-          } catch (e) {
-            console.warn('[BRD] download parsing error', e);
-          }
-
-          // 4) Fallback: download current preview HTML
-          fallbackHtml();
-
-          // helpers
-          function triggerDownload(href, filename) {
-            const a = document.createElement('a');
-            a.href = href;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-          }
-          function triggerBlob(blob, filename) {
+            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>GoComet BRD</title></head><body>${document.getElementById('brd-content').innerHTML}</body></html>`;
+            const blob = new Blob([html], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
-            triggerDownload(url, filename);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'GoComet-BRD.html'; a.click();
             URL.revokeObjectURL(url);
-          }
-          function fallbackHtml() {
-            const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>GoComet BRD</title></head><body>'
-                       + (document.getElementById('brd-content')?.innerHTML || '')
-                       + '</body></html>';
-            triggerBlob(new Blob([html], { type: 'text/html' }), 'GoComet-BRD.html');
-            showNotification('Downloading BRD (HTML fallback)…', 'info');
-          }
+            showNotification('Downloading BRD...', 'info');
         }
 
         // -------------------- Utils --------------------
@@ -619,16 +563,6 @@
             const k = 1024, sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-        function base64ToBlob(base64, mime = 'application/octet-stream') {
-          const pure = base64.includes(',') ? base64.split(',')[1] : base64;
-          const padded = pure + '='.repeat((4 - (pure.length % 4)) % 4);
-          let byteString;
-          try { byteString = atob(padded); } catch { byteString = atob(padded.replace(/[^A-Za-z0-9+/]/g, '')); }
-          const len = byteString.length;
-          const bytes = new Uint8Array(len);
-          for (let i = 0; i < len; i++) bytes[i] = byteString.charCodeAt(i);
-          return new Blob([bytes], { type: mime });
         }
 
         // Initialize UI
