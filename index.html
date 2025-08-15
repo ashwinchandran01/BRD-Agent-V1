@@ -487,7 +487,11 @@
                 
                 let data = {};
                 try {
-                  data = JSON.parse(raw); window.lastBRD = data; // store entire response for Download BRD
+                data = JSON.parse(raw);
+                if (typeof data === 'string') { try { data = JSON.parse(data); } catch (e) {} }
+                window.lastBRD = data;
+                console.log('[BRD] lastBRD →', data);
+                    
                   // n8n sometimes returns an array if the responder is set to "All items"
                   if (Array.isArray(data)) data = data[0] || {};
                 } catch {
@@ -549,70 +553,69 @@
 
         function downloadBRD() {
               const resp = window.lastBRD || {};
+              try {
+                // 1) data URL from backend (preferred)
+                if (resp.download_url) {
+                  triggerDownload(resp.download_url, resp.filename || 'GoComet-BRD.doc');
+                  showNotification && showNotification('Downloading BRD (.doc)…', 'info');
+                  return;
+                }
             
-              // 1) data URL provided by backend (preferred)
-              if (resp.download_url) {
+                // 2) direct URL
+                if (resp.fileUrl) {
+                  fetch(resp.fileUrl)
+                    .then(r => r.blob())
+                    .then(blob => triggerBlob(blob, resp.filename || 'GoComet-BRD.doc'))
+                    .catch(err => { console.warn('[BRD] fileUrl fetch failed', err); fallbackHtml(); });
+                  return;
+                }
+            
+                // 3) n8n binary base64 (common)
+                const b = resp.binary || {};
+                // try several common shapes
+                let node = (b.document || b.data || b.file || null);
+                // sometimes it's nested under `binary: { data: { data: 'base64...' } }`
+                const base64 = node
+                  ? (node.data?.data || node.data || node.file || null)
+                  : null;
+            
+                if (base64) {
+                  const mime = node.mimeType || 'application/msword';
+                  const name = node.fileName || node.filename || resp.filename || 'GoComet-BRD.doc';
+                  const blob = base64ToBlob(base64, mime);
+                  triggerBlob(blob, name);
+                  showNotification && showNotification('Downloading BRD (.doc)…', 'info');
+                  return;
+                }
+              } catch (e) {
+                console.warn('[BRD] download parsing error', e);
+              }
+            
+              // 4) Fallback: download current preview HTML
+              fallbackHtml();
+            
+              // helpers
+              function triggerDownload(href, filename) {
                 const a = document.createElement('a');
-                a.href = resp.download_url; // e.g. data:application/msword;base64,....
-                a.download = resp.filename || 'GoComet-BRD.doc';
+                a.href = href;
+                a.download = filename;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                showNotification && showNotification('Downloading BRD (.doc)…', 'info');
-                return;
               }
-            
-              // 2) direct URL to a file
-              if (resp.fileUrl) {
-                fetch(resp.fileUrl)
-                  .then(r => r.blob())
-                  .then(blob => {
-                    const a = document.createElement('a');
-                    const url = URL.createObjectURL(blob);
-                    a.href = url;
-                    a.download = resp.filename || 'GoComet-BRD.doc';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                  })
-                  .catch(() => fallbackHtmlDownload());
-                return;
-              }
-            
-              // 3) raw base64 inside n8n "binary" (very common)
-              //    supports: binary.document.data, binary.data.data
-              const b = resp.binary || {};
-              const b64 =
-                (b.document && (b.document.data || b.document.data?.data)) ||
-                (b.data && (b.data.data || b.data?.data)) ||
-                null;
-            
-              if (b64) {
-                const fname =
-                  (b.document && (b.document.fileName || b.document.fileName)) ||
-                  (b.data && (b.data.fileName || b.data.fileName)) ||
-                  resp.filename ||
-                  'GoComet-BRD.doc';
-            
-                // Guess the correct MIME
-                const mime =
-                  (b.document && b.document.mimeType) ||
-                  (b.data && b.data.mimeType) ||
-                  'application/msword';
-            
-                const blob = base64ToBlob(b64, mime);
-                const a = document.createElement('a');
+              function triggerBlob(blob, filename) {
                 const url = URL.createObjectURL(blob);
-                a.href = url;
-                a.download = fname;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+                triggerDownload(url, filename);
                 URL.revokeObjectURL(url);
-                showNotification && showNotification('Downloading BRD (.doc)…', 'info');
-                return;
               }
+              function fallbackHtml() {
+                const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>GoComet BRD</title></head><body>'
+                           + (document.getElementById('brd-content')?.innerHTML || '')
+                           + '</body></html>';
+                triggerBlob(new Blob([html], { type: 'text/html' }), 'GoComet-BRD.html');
+                showNotification && showNotification('Downloading BRD (HTML fallback)…', 'info');
+              }
+            }
             
               // 4) Fallback: download current HTML preview
               fallbackHtmlDownload();
@@ -643,13 +646,16 @@
         }
        
         function base64ToBlob(base64, mime = 'application/octet-stream') {
-          // handle possible data URL prefix
+          // strip data URL prefix if present
           const pure = base64.includes(',') ? base64.split(',')[1] : base64;
-          const byteChars = atob(pure);
-          const byteNums = new Array(byteChars.length);
-          for (let i = 0; i < byteChars.length; i++) byteNums[i] = byteChars.charCodeAt(i);
-          const byteArray = new Uint8Array(byteNums);
-          return new Blob([byteArray], { type: mime });
+          // fix missing padding
+          const padded = pure + '='.repeat((4 - (pure.length % 4)) % 4);
+          let byteString;
+          try { byteString = atob(padded); } catch { byteString = atob(padded.replace(/[^A-Za-z0-9+/]/g, '')); }
+          const len = byteString.length;
+          const bytes = new Uint8Array(len);
+          for (let i = 0; i < len; i++) bytes[i] = byteString.charCodeAt(i);
+          return new Blob([bytes], { type: mime });
         }
 
         // Initialize UI
@@ -658,6 +664,7 @@
     </script>
 </body>
 </html>
+
 
 
 
