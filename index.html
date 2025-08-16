@@ -446,7 +446,6 @@
             switchTab('canvas');
         }
 
-// -------------------- BRD Generation --------------------
 async function generateBRD() {
     try {
         if ((uploadedFiles.solution.length + uploadedFiles.flowchart.length) === 0) {
@@ -486,13 +485,14 @@ async function generateBRD() {
             throw new Error(`HTTP ${res.status}`);
         }
 
-        // Download Word file
+        // --- ✅ Handle Word file response ---
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
+
         const a = document.createElement("a");
         a.href = url;
 
-        // Try filename from Content-Disposition, else fallback
+        // use server filename if provided, else fallback
         const cd = res.headers.get("Content-Disposition");
         if (cd && cd.includes("filename=")) {
             a.download = cd.split("filename=")[1].replace(/"/g, "");
@@ -506,6 +506,8 @@ async function generateBRD() {
         URL.revokeObjectURL(url);
 
         finishProcessing();
+        showNotification("BRD downloaded successfully!", "success");
+
     } catch (err) {
         console.error(err);
         clearInterval(processingInterval);
@@ -547,6 +549,7 @@ async function generateBRD() {
     </script>
 </body>
 </html>
+
 
 
 
