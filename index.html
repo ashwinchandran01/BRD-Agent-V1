@@ -463,7 +463,7 @@ async function generateBRD() {
     const res = await fetch(CONFIG.n8nWebhookUrl, {
       method: 'POST',
       body: form,
-      headers: { "Accept": "application/msword" },
+      mode: 'cors',
     });
 
     if (!res.ok) {
@@ -524,6 +524,7 @@ async function generateBRD() {
     </script>
 </body>
 </html>
+
 
 
 
