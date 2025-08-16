@@ -447,74 +447,49 @@
         }
 
 async function generateBRD() {
-    try {
-        if ((uploadedFiles.solution.length + uploadedFiles.flowchart.length) === 0) {
-            showNotification('Please add at least one file.', 'error');
-            return;
-        }
-
-        startFakeProcessing();
-
-        const form = new FormData();
-        uploadedFiles.solution.forEach(f => form.append('solution_docs', f));
-        uploadedFiles.flowchart.forEach(f => form.append('visual_assets', f));
-        form.append('source', 'gocomet-brd-ui');
-
-        const controller = new AbortController();
-        const to = setTimeout(() => controller.abort(), CONFIG.timeout);
-
-        let res;
-        try {
-            res = await fetch(CONFIG.n8nWebhookUrl, {
-                method: 'POST',
-                body: form,
-                mode: 'cors',
-                headers: { 'Accept': 'application/msword' },
-                signal: controller.signal,
-            });
-        } catch (e) {
-            clearTimeout(to);
-            showNotification(`Network error: ${e.message}`, 'error');
-            throw e;
-        }
-        clearTimeout(to);
-
-        if (!res.ok) {
-            const errText = await res.text();
-            showNotification(`HTTP ${res.status}: ${errText.slice(0, 200)}`, 'error');
-            throw new Error(`HTTP ${res.status}`);
-        }
-
-        // --- ✅ Handle Word file response ---
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-
-        // use server filename if provided, else fallback
-        const cd = res.headers.get("Content-Disposition");
-        if (cd && cd.includes("filename=")) {
-            a.download = cd.split("filename=")[1].replace(/"/g, "");
-        } else {
-            a.download = "GoComet-BRD.doc";
-        }
-
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-
-        finishProcessing();
-        showNotification("BRD downloaded successfully!", "success");
-
-    } catch (err) {
-        console.error(err);
-        clearInterval(processingInterval);
-        document.getElementById('progress-title').textContent = 'Processing failed';
-        document.getElementById('progress-description').textContent = 'Please try again or contact support.';
-        showNotification(`Failed to generate BRD: ${err.message}`, 'error');
+  try {
+    if ((uploadedFiles.solution.length + uploadedFiles.flowchart.length) === 0) {
+      showNotification('Please add at least one file.', 'error');
+      return;
     }
+
+    startFakeProcessing();
+
+    const form = new FormData();
+    uploadedFiles.solution.forEach(f => form.append('solution_docs', f));
+    uploadedFiles.flowchart.forEach(f => form.append('visual_assets', f));
+    form.append('source', 'gocomet-brd-ui');
+
+    const res = await fetch(CONFIG.n8nWebhookUrl, {
+      method: 'POST',
+      body: form,
+      headers: { "Accept": "application/msword" },
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    // get binary response
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "BRD.doc"; // fallback name
+    a.click();
+    URL.revokeObjectURL(url);
+
+    setProgress(97);
+    finishProcessing();
+
+  } catch (err) {
+    clearInterval(processingInterval);
+    console.error(err);
+    setProgress(0);
+    document.getElementById('progress-title').textContent = 'Processing failed';
+    document.getElementById('progress-description').textContent = 'Please try again or contact support.';
+    showNotification(`Failed to generate BRD: ${err.message}`, 'error');
+  }
 }
 
         // -------------------- Actions --------------------
@@ -549,6 +524,7 @@ async function generateBRD() {
     </script>
 </body>
 </html>
+
 
 
 
