@@ -456,7 +456,6 @@ async function generateBRD() {
 
         startFakeProcessing();
 
-        // Build multipart form data
         const form = new FormData();
         uploadedFiles.solution.forEach(f => form.append('solution_docs', f));
         uploadedFiles.flowchart.forEach(f => form.append('visual_assets', f));
@@ -471,7 +470,7 @@ async function generateBRD() {
                 method: 'POST',
                 body: form,
                 mode: 'cors',
-                headers: { 'Accept': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+                headers: { 'Accept': 'application/msword' },
                 signal: controller.signal,
             });
         } catch (e) {
@@ -487,20 +486,18 @@ async function generateBRD() {
             throw new Error(`HTTP ${res.status}`);
         }
 
-        // 🔑 Get back the Word file as blob
+        // Download Word file
         const blob = await res.blob();
-
-        // Create a download link for the user
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
 
-        // Extract filename if server sets Content-Disposition
+        // Try filename from Content-Disposition, else fallback
         const cd = res.headers.get("Content-Disposition");
         if (cd && cd.includes("filename=")) {
             a.download = cd.split("filename=")[1].replace(/"/g, "");
         } else {
-            a.download = "GoComet-BRD.docx";
+            a.download = "GoComet-BRD.doc";
         }
 
         document.body.appendChild(a);
@@ -508,13 +505,10 @@ async function generateBRD() {
         a.remove();
         URL.revokeObjectURL(url);
 
-        // Update UI
-        setProgress(97);
         finishProcessing();
     } catch (err) {
-        clearInterval(processingInterval);
         console.error(err);
-        setProgress(0);
+        clearInterval(processingInterval);
         document.getElementById('progress-title').textContent = 'Processing failed';
         document.getElementById('progress-description').textContent = 'Please try again or contact support.';
         showNotification(`Failed to generate BRD: ${err.message}`, 'error');
@@ -553,5 +547,6 @@ async function generateBRD() {
     </script>
 </body>
 </html>
+
 
 
